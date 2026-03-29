@@ -20,8 +20,8 @@ class Todo(Base):
 
     user_id = Column(Uuid, ForeignKey("USER.id"), primary_key=True)
     task_id = Column(Uuid, ForeignKey("TASK.id"), primary_key=True)
-    skill_id = Column(Uuid, ForeignKey("TASK.skill_id"), primary_key=True)
-    matching_id = Column(Uuid, ForeignKey("TASK.matching_id"), primary_key=True)
+    skill_id = Column(Uuid, ForeignKey("SKILL.id"), primary_key=True)
+    matching_id = Column(Uuid, ForeignKey("MATCHING.id"), primary_key=True)
     is_completed = Column(Boolean, default=False)
 
 

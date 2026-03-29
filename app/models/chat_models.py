@@ -14,7 +14,7 @@ class Chatroom(Base):
     name = Column(Uuid)
     matching_id = Column(Uuid, ForeignKey("MATCHING.id"))
     announcement_id = Column(Uuid, ForeignKey("ANNOUNCEMENT.id"))
-    user_id = Column(Uuid, ForeignKey("ANNOUNCEMENT.user_id"))
+    user_id = Column(Uuid, ForeignKey("USER.id"))
 
 
 class JoinChat(Base):
