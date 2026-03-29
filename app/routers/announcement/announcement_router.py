@@ -12,17 +12,19 @@ def get_all_announcements():
 
 
 @router.get("/detail/{announcement_id}")
-def get_announcement_detail(announcement_id: str):
+def get_announcement_detail(announcement_id):
     _ = announcement_id
     return {"message": "get_announcement_detail handler"}
 
 
 @router.post("")
-def create_announcement():
+def create_announcement(payload: dict):
+    _ = payload
     return {"message": "create_announcement handler"}
 
 
 @router.patch("/{announcement_id}")
-def update_announcement(announcement_id: str):
+def update_announcement(announcement_id, payload: dict):
     _ = announcement_id
+    _ = payload
     return {"message": "update_announcement handler"}
