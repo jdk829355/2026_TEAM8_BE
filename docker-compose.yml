@@ -34,7 +34,7 @@ services:
     # uv run을 사용하여 uvicorn 실행
     command: uv run main.py
     env_file:
-      - ./.env
+      - ./.env.secret
     depends_on:
       - postgres
       - redis
