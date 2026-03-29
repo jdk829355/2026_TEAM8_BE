@@ -4,7 +4,7 @@ import jwt
 import os
 import dotenv
 
-dotenv.load_dotenv()
+dotenv.load_dotenv(".env.secret")  # .env.secret 파일에서 환경 변수 로드
 
 SECRET_KEY = os.getenv("JWT_SECRET", "my_super_secret_key")
 ALGORITHM = "HS256"
