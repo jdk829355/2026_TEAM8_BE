@@ -9,4 +9,4 @@ router = APIRouter(
 @router.get("/")
 def read_skills(sign: SignUpRequest):
     sign.email
-    return "List of skills"
+    return "List of skills login func"
