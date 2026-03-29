@@ -2,9 +2,10 @@ from fastapi import APIRouter
 from app.schemas.auth_schema import SignUpRequest
 
 router = APIRouter(
-    prefix="/skills",
-    tags=["skills"],
+    prefix="/skill",
+    tags=["skill"],
 )
+
 
 @router.get("/")
 def read_skills(sign: SignUpRequest):
