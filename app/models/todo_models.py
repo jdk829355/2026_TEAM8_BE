@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Boolean, Column, ForeignKey, String, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, String, Text
 from sqlalchemy.types import Uuid
 
 from app.models.base import Base
@@ -29,4 +29,6 @@ class GeneratedTodo(Base):
     __tablename__ = "GENERATED_TODO"
 
     chatroom_id = Column(Uuid, ForeignKey("CHATROOM.id"), primary_key=True)
+    skill_id = Column(Uuid, ForeignKey("SKILL.id"), primary_key=True)
+    created_at = Column(DateTime, primary_key=True)
     name = Column(Text)
