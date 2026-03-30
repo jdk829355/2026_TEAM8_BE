@@ -1,3 +1,4 @@
+from datetime import datetime
 import uuid
 from sqlalchemy.orm import Session
 from app.models.todo_models import Todo, Task, GeneratedTodo
@@ -62,7 +63,7 @@ class TodoRepository:
         ).first() # 복합키(user+task)를 통해 딱 하나의 투두만 집어내어 수정
         
         if todo:
-            todo.is_completed = is_completed
+            todo.is_completed = is_completed # type: ignore
             db.commit()
             db.refresh(todo)
         return todo
@@ -72,11 +73,14 @@ class TodoRepository:
     # ---------------------------------------------------------
 
     # 용도: 채팅 로그 분석 결과로 나온 '추천 커리큘럼'들을 임시 저장소에 쌓아둘 때 사용
-    def create_generated_todo(self, db: Session, chatroom_id: uuid.UUID, content: str):
+    def create_generated_todo(self, db: Session, chatroom_id: uuid.UUID, content: str, skill_id: uuid.UUID, created_at: datetime):
         db_gen = GeneratedTodo(
             chatroom_id=chatroom_id,
-            name=content
+            name=content,
+            skill_id=skill_id,
+            created_at=created_at
         )
+        
         db.add(db_gen)
         db.commit()
         db.refresh(db_gen)

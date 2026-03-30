@@ -41,11 +41,4 @@ class AuthService:
     def is_email_duplicated(self, db, email) -> bool:
         return self.repo.is_email_duplicated(db, email)
     
-    def update_user_info(self, db, user_id, payload):
-        payload = {
-            "description": payload.get("description"),
-            "passion": payload.get("passion"),
-            "speech": payload.get("speech"),
-            "purpose": payload.get("purpose"),
-        }
-        return self.repo.update_user(db, user_id, payload)
+    
