@@ -29,20 +29,5 @@ class AuthRepository:
         db.refresh(user)
         return user
 
-    def update_user(self, db: Session, user_id: UUID, payload: dict):
-        user = self.get_user_by_id(db, user_id)
-        if user is None:
-            return None
-
-        for key, value in payload.items():
-            if key == "id":
-                continue
-            if hasattr(user, key):
-                setattr(user, key, value)
-
-        db.commit()
-        db.refresh(user)
-        return user
-
     def is_email_duplicated(self, db: Session, email: str):
         return db.query(User).filter(User.email == email).first() is not None
