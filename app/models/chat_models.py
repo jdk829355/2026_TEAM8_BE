@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.types import Uuid
 
 from app.models.base import Base
@@ -11,7 +11,7 @@ class Chatroom(Base):
     __tablename__ = "CHATROOM"
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
-    name = Column(Uuid)
+    name = Column(String(255), nullable=False)
     matching_id = Column(Uuid, ForeignKey("MATCHING.id"))
     announcement_id = Column(Uuid, ForeignKey("ANNOUNCEMENT.id"))
     user_id = Column(Uuid, ForeignKey("USER.id"))

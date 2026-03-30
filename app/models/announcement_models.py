@@ -17,5 +17,3 @@ class Announcement(Base):
     can_teach_message = Column(Text)
     can_teach_difficulty = Column(String(100))
     want_to_difficulty = Column(String(100))
-    
-
