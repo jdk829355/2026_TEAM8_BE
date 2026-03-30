@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     engine.dispose()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, root_path="/api")
 
 app.include_router(announcement_router)
 app.include_router(auth_router)

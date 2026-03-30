@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Text
 from sqlalchemy.types import Uuid
@@ -40,7 +40,7 @@ class ChatLog(Base):
     author_id = Column(Uuid, ForeignKey("USER.id"))
     room_id = Column(Uuid, ForeignKey("CHATROOM.id"))
     content = Column(Text)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=datetime.now(timezone.utc))
     read = Column(Boolean, default=False)
 
 

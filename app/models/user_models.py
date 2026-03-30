@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, Integer, String, Text
+from sqlalchemy import Boolean, Column, Integer, String, Text
 from sqlalchemy.types import Uuid
 
 from app.models.base import Base
@@ -16,3 +16,5 @@ class User(Base):
     passion = Column(Integer)
     speech = Column(Integer)
     purpose = Column(Integer)
+    is_verified = Column(Boolean, default=False)
+    password = Column(String(255))
