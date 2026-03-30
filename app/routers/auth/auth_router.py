@@ -78,12 +78,6 @@ def verify_email(token: str, service: AuthService = Depends(get_auth_service), d
         html_content = f.read()
     return HTMLResponse(content=html_content, status_code=200)
 
-
-@router.patch("/user_info")
-def update_user_info():
-    return {"message": "update_user_info handler"}
-
-
 @router.post("/login", response_model=LoginResponse)
 def login(login_request: LoginRequest, service: AuthService = Depends(get_auth_service), db=Depends(get_db)):
     user:User = service.get_user_by_email(db=db, email=login_request.email)
