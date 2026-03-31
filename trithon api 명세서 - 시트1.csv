@@ -140,12 +140,12 @@ ViewToDoCandidate",안시현,GET,/todo/generated_todo,,,,"[
 Todo,"todo 후보 채택
 SelectToDoCandidate",안시현,POST,/todo,target_id (후보의 id),,,,스키마 구현 안함
 User,"유저 프로필 조회 
-SearchUserProfile",김재훈,GET,/user/{user_id}/profile,user_id,,"{
+SearchUserProfile",김재훈,GET,/user/{user_id}/profile,user_id,,,"{
 ""name"": str,
  ""email"": str,
  ""teaching_skills"": [str], 
 ""learning_skills"": [str]
-}",,
+}",
 User,"내 정보 수정
 EditMyProfile",김재훈,PATCH,/user/me,,,"{
 ""name"": str,
