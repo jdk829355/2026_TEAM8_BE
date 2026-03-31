@@ -20,8 +20,8 @@ class EventSubscriber:
         await self.manager.send_to_channel(user_event(event["to_user_id"]), event)
 
     async def _handle_reply_matching(self, event):
-        await self.manager.send_to_channel(user_event(event["user_id"]), event)
         await self.manager.send_to_channel(user_event(event["to_user_id"]), event)
+        await self.manager.send_to_channel(user_event(event["user_id"]), event)
 
     async def start(self):
         pubsub = self.redis.pubsub()
