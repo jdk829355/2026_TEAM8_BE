@@ -1,33 +1,106 @@
 from datetime import datetime, timezone
+from typing import List, Tuple
 from uuid import UUID
 
+from sqlalchemy import Row, and_, func
+from sqlalchemy.orm import aliased
 from sqlalchemy.orm import Session
 
 from app.models.announcement_models import Announcement
 from app.models.chat_models import ChatLog, Chatroom, JoinChat, MatchingRequest
+from app.models.user_models import User
 
 
 class ChatRepository:
-    def get_my_chatrooms(self, db: Session, user_id: UUID) -> list[Chatroom]:
+    def get_my_chatrooms(
+        self,
+        db: Session,
+        user_id: UUID,
+    ) -> List[Row[Tuple[UUID, str, str, datetime]]]:
+        me = aliased(JoinChat)
+        peer = aliased(JoinChat)
+        opponent = aliased(User)
+
+        latest_message_subquery = (
+            db.query(
+                ChatLog.room_id.label("room_id"),
+                func.max(ChatLog.timestamp).label("latest_timestamp"),
+            )
+            .group_by(ChatLog.room_id)
+            .subquery()
+        )
+
+        return (
+            db.query(
+                Chatroom.id.label("room_id"),
+                opponent.name.label("opponent_name"),
+                func.coalesce(ChatLog.content, "").label("last_message"),
+                func.coalesce(
+                    latest_message_subquery.c.latest_timestamp,
+                    datetime.now(timezone.utc),
+                ).label("updated_at"),
+            )
+            .join(me, me.room_id == Chatroom.id)
+            .join(peer, and_(peer.room_id == Chatroom.id, peer.user_id != user_id))
+            .join(opponent, opponent.id == peer.user_id)
+            .outerjoin(
+                latest_message_subquery,
+                latest_message_subquery.c.room_id == Chatroom.id,
+            )
+            .outerjoin(
+                ChatLog,
+                and_(
+                    ChatLog.room_id == Chatroom.id,
+                    ChatLog.timestamp == latest_message_subquery.c.latest_timestamp,
+                ),
+            )
+            .filter(me.user_id == user_id)
+            .order_by(
+                func.coalesce(
+                    latest_message_subquery.c.latest_timestamp,
+                    datetime.now(timezone.utc),
+                ).desc()
+            )
+            .all()
+        )
+
+    def check_matching_exists(self, db: Session, room_id: UUID) -> bool:
         return (
             db.query(Chatroom)
-            .join(JoinChat, JoinChat.room_id == Chatroom.id)
-            .filter(JoinChat.user_id == user_id)
-            .all()
+            .filter(Chatroom.id == room_id, Chatroom.matching_id.isnot(None))
+            .first()
+            is not None
         )
 
     def get_chat_logs(
         self,
         db: Session,
         room_id: UUID,
-        before_timestamp: datetime | None = None,
+        last_message_id: UUID | None = None,
         limit: int = 50,
-    ) -> list[ChatLog]:
-        query = db.query(ChatLog).filter(ChatLog.room_id == room_id)
-        if before_timestamp is not None:
-            query = query.filter(ChatLog.timestamp < before_timestamp)
+    ) -> List[Row[Tuple[ChatLog, str]]]:
+        query = (
+            db.query(ChatLog, User.name.label("sender_name"))
+            .filter(ChatLog.room_id == room_id)
+            .join(User, User.id == ChatLog.author_id)
+        )
+        if last_message_id is not None:
+            cursor_log = (
+                db.query(ChatLog.timestamp)
+                .filter(
+                    ChatLog.room_id == room_id,
+                    ChatLog.id == last_message_id,
+                )
+                .first()
+            )
+            if cursor_log is not None:
+                query = query.filter(ChatLog.timestamp < cursor_log.timestamp)
 
-        logs = query.order_by(ChatLog.timestamp.desc()).limit(limit).all()
+        logs = (
+            query.order_by(ChatLog.timestamp.desc(), ChatLog.id.desc())
+            .limit(limit)
+            .all()
+        )
         logs.reverse()
         return logs
 
@@ -70,7 +143,7 @@ class ChatRepository:
             name=name,
             matching_id=None,
             announcement_id=announcement_id,
-            user_id=participant_user_id,
+            user_id=announcement.user_id,
         )
         db.add(chatroom)
         db.flush()
@@ -122,7 +195,6 @@ class ChatRepository:
         )
         to_user_id = opponent_row[0] if opponent_row is not None else None
 
-
         if to_user_id is None:
             return None
 
@@ -147,55 +219,6 @@ class ChatRepository:
         db.commit()
         db.refresh(matching_request)
         return matching_request
-
-    def accept_matching_request(
-        self,
-        db: Session,
-        matching_request_id: UUID,
-        matching_id: UUID,
-    ) -> Chatroom | None:
-        """이미 있는 matching에 대해 matching request를 연결하고 matching request를 삭제하는 로직"
-
-        Args:
-            db (Session): 
-            matching_request_id (UUID): 
-            matching_id (UUID): 
-
-        Returns:
-            Chatroom | None: 
-        """
-        matching_request = (
-            db.query(MatchingRequest)
-            .filter(MatchingRequest.id == matching_request_id)
-            .first()
-        )
-        if matching_request is None:
-            return None
-
-        chatroom = (
-            db.query(Chatroom).filter(Chatroom.id == matching_request.room_id).first()
-        )
-        if chatroom is None:
-            return None
-
-        chatroom.matching_id = matching_id  # type: ignore
-        db.delete(matching_request)
-        db.commit()
-        db.refresh(chatroom)
-        return chatroom
-
-    def reject_matching_request(self, db: Session, matching_request_id: UUID) -> bool:
-        matching_request = (
-            db.query(MatchingRequest)
-            .filter(MatchingRequest.id == matching_request_id)
-            .first()
-        )
-        if matching_request is None:
-            return False
-
-        db.delete(matching_request)
-        db.commit()
-        return True
 
     def update_chatroom_name(
         self,

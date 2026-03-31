@@ -16,3 +16,6 @@ class ViewDetailMatchingResponse(BaseModel):
     teaching_skill: str
     learning_skill: str
     message: str
+
+class AcceptMatchingRequest(BaseModel):
+    accept: bool
