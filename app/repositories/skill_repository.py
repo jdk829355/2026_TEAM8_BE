@@ -101,3 +101,25 @@ class SkillRepository:
             .order_by(Skill.name.asc())
             .all()
         )
+
+    def get_learning_skills_by_user(self, db: Session, user_id: UUID) -> list[Skill]:
+        """Get all learning skills for a user using join"""
+        return (
+            db.query(Skill)
+            .join(Want, Skill.id == Want.skill_id)
+            .filter(Want.user_id == user_id)
+            .order_by(Skill.name.asc())
+            .all()
+        )
+
+    def get_teaching_skills_by_user(self, db: Session, user_id: UUID) -> list[Skill]:
+        return (
+            db.query(Skill)
+            .join(CanTeach, Skill.id == CanTeach.skill_id)
+            .filter(CanTeach.user_id == user_id)
+            .order_by(Skill.name.asc())
+            .all()
+        )
+
+    def get_skill_by_name(self, db: Session, name: str) -> Skill | None:
+        return db.query(Skill).filter(Skill.name.ilike(name)).first()
