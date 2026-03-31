@@ -70,9 +70,8 @@ def get_skill_service(
 @lru_cache()
 def get_matching_service(
     repo: MatchingRepository = Depends(get_matching_repository),
-    chat_repo: ChatRepository = Depends(get_chat_repository),
 ) -> MatchingService:
-    return MatchingService(repo, chat_repo)
+    return MatchingService(repo)
 
 
 @lru_cache()

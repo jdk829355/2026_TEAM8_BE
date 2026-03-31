@@ -1,4 +1,10 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+
+from app.core.dependencies import get_announcement_service
+from app.core.verify_jwt import get_current_user_id
+from app.dependencies.database import get_db
+from app.schemas.announcement_schema import CreateAnnounceRequest
+from app.services.announcement_service import AnnouncementService
 
 router = APIRouter(
     prefix="/announcement",
@@ -18,9 +24,12 @@ def get_announcement_detail(announcement_id):
 
 
 @router.post("")
-def create_announcement(payload: dict):
-    _ = payload
-    return {"message": "create_announcement handler"}
+def create_announcement(create_announcement_request: CreateAnnounceRequest, user_id: str = Depends(get_current_user_id), service: AnnouncementService = Depends(get_announcement_service), db = Depends(get_db))->str:
+    try:
+        announcement = service.create_announcement(db=db, payload=create_announcement_request, user_id=user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return str(announcement.id)
 
 
 @router.patch("/{announcement_id}")
