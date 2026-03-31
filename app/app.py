@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
+import asyncio
 from app.routers.announcement.announcement_router import router as announcement_router
 from app.routers.auth.auth_router import router as auth_router
 from app.routers.chat.chat_router import router as chat_router
@@ -8,6 +9,9 @@ from app.routers.skill.skill_router import router as skill_router
 from app.routers.todo.todo_router import router as todo_router
 from app.routers.user.user_router import router as user_router
 from app.dependencies.database import engine
+from app.realtime.connection_manager import manager
+from app.realtime.event_subscriber import EventSubscriber
+from app.realtime.publisher import redis
 from app.models.base import Base
 from sqlalchemy import text
 
@@ -18,8 +22,16 @@ async def lifespan(app: FastAPI):
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
     Base.metadata.create_all(bind=engine)
+
+    subscriber = EventSubscriber(redis=redis, manager=manager)
+    subscriber_task = asyncio.create_task(subscriber.start())
     yield
     # shutdown
+    subscriber_task.cancel()
+    try:
+        await subscriber_task
+    except asyncio.CancelledError:
+        pass
     engine.dispose()
 
 
