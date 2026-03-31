@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_matching_service
+from app.core.verify_jwt import get_current_user_id
 from app.dependencies.database import get_db
 from app.realtime.channels import user_event
 from app.schemas.matching_schema import AcceptMatchingRequest
@@ -38,6 +39,7 @@ async def accept_matching(
     matching_request_id: str,
     service: MatchingService = Depends(get_matching_service),
     db: Session = Depends(get_db),
+    user_id: str = Depends(get_current_user_id)
 ):
     try:
         matching_request_uuid = UUID(matching_request_id)
@@ -62,10 +64,12 @@ async def accept_matching(
         await publisher.publish(user_event(str(result["user_id"])), result)
         await publisher.publish(user_event(str(result["to_user_id"])), result)
     else:
-        is_deleted = service.reject_matching_request(
+        is_deleted, result = service.reject_matching_request(
             db=db,
             matching_request_id=matching_request_uuid,
         )
         if not is_deleted:
             raise HTTPException(status_code=404, detail="matching request not found")
+        await publisher.publish(user_event(str(result["user_id"])), result)
+        await publisher.publish(user_event(str(result["to_user_id"])), result)
     return

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -149,6 +150,39 @@ class MatchingRepository:
             raise
 
         return (matching.id, host_user_id, guest_user_id)  # type: ignore
+
+    def matching_request_info(self, db: Session, matching_request_id: UUID) -> dict[str, Any] | None:
+        matching_request = (
+            db.query(MatchingRequest)
+            .filter(MatchingRequest.id == matching_request_id)
+            .first()
+        )
+        if matching_request is None:
+            return None
+
+        chatroom = (
+            db.query(Chatroom).filter(Chatroom.id == matching_request.room_id).first()
+        )
+        if chatroom is None:
+            return None
+
+        announcement = (
+            db.query(Announcement)
+            .filter(Announcement.id == chatroom.announcement_id)
+            .first()
+        )
+        if announcement is None or announcement.user_id is None:
+            return None
+
+        host_user_id = announcement.user_id
+        guest_user_id = (
+            matching_request.from_user_id
+            if matching_request.from_user_id != host_user_id  # type: ignore
+            else matching_request.to_user_id
+        )
+        if guest_user_id is None:
+            return None
+        return {"host_user_id": host_user_id, "guest_user_id": guest_user_id}
 
     def reject_matching_request(self, db: Session, matching_request_id: UUID) -> bool:
         matching_request = (
