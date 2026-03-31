@@ -1,0 +1,201 @@
+도메인,이름,담당자,method,endpoint,query parameter,path parameter,request model,response model,
+Auth,"인증 메일 전송
+EmailAuthentication)",정대균,GET,/auth/send_email,email,,,200,스키마 구현 안함
+Auth,"인증 번호 입력
+(NumberAuthentication)",정대균,GET,/auth/verify_email,code,,,200,스키마 구현 안함
+Auth,"유저 정보 입력
+(UserInfo)",정대균,POST,/auth/user/register,,,"{
+    ""email"": str,
+    ""name"": str,
+    ""password"": str
+}",200,
+Auth,"로그인
+Login",정대균,POST,/auth/login,,,"{
+    ""email"": str,
+    ""password"": str
+}","{
+  ""access_token"": str,
+  ""token_type"": ""Bearer"",
+  ""expires_in"": int,
+}",
+Skill,"배우고싶은 것 등록
+WantToLearn",한준희,POST,/skill/want_to,,,"{
+    ""learning_skill"": list [str],
+}",200,
+Skill,"가르칠 수 있는 것 등록
+CanToTeach",한준희,POST,/skill/can_teach,,,"{
+    ""teaching_skill"": list [str],
+}",200,
+Skill,"전체 skill 조회
+ViewAllSkills",한준희,GET,/skill/all,,,,"
+    {
+     ""teaching_skill"": list[str],
+     ""learning_skill"": list[str],
+    }
+",
+Skill,"배우려는 skill 조회
+ViewWantToLearn",한준희,GET,/skill/want_to,,,,"
+    {
+     ""learning_skill"": list[str],
+    }",
+Skill,"가르칠 수 있는 Skill 조회
+ViewCanToTeach",한준희,GET,/skill/can_teach,,,,"
+    {
+     ""teaching_skill"": list[str],
+    }",
+Skill,"배우고 싶은 스킬 수정
+EditWantToLearn",한준희,PATCH,/skill/want_to,,,"{
+    ""learning_skill"": list [str],
+}",,
+Skill,"가르칠 수 있는 스킬 수정
+EditCanToTeach",한준희,PATCH,/skill/can_teach,,,"{
+    ""teaching_skill"": list [str],
+}",,
+Matching,"내 매칭 리스트 조회
+ViewMyMatchingList",김재훈,GET,/matching/my,,,,"[
+    {
+     ""name"": str,
+    ""teaching_skill"": str,
+    ""learning_skill"": str,
+    ""status"": str
+    }
+]",
+Matching,"매칭 상세 정보 조회
+ViewDetailMatchingList",김재훈,GET,/matching/{id},,id,,"{
+   ""opponent_name"": str,
+    ""teaching_skill"": str,
+    ""learning_skill"": str,
+    ""message"": str
+}",
+Chat,"채팅방 목록 조회
+SearchChatList",정대균,GET,/chat/rooms,,,,"[
+    {
+        ""room_id"": uuid,
+        ""opponent_name"": str,
+        ""last_message"": str,
+        ""updated_at"": str
+    }
+]",
+Chat,"채팅방 생성
+EnterChatRoom",정대균,POST,/chat/room,,,"{""announcement_id"":  uuid, ""name"": str}","{""room_id"": uuid}",스키마 구현 안함
+Chat,"채팅 연결
+ConnectChat",정대균,WS,/chat/ws/{room_id},,room_id,"{ ""type"": ""CONNECT""}",,스키마 구현 안함
+Chat,"채팅 내역 불러오기
+LoadChatList",정대균,GET,/chat/room/{room_id},page,room_id,,,스키마 구현 안함
+Chat,"AI 대화 분석
+AnalysisAIChat",정대균,POST,/chat/room/{room_id}/ai-evaluate,room_id,,,,스키마 구현 안함
+Chat,"교환 요청하기
+RequestMatch",정대균,WS,/chat/ws/{room_id},,room_id,"{ ""type"": ""REQUEST_EXCHANGE""}",,스키마 구현 안함
+Chat,"교환 요청 수락/거절
+yes_no_request",정대균,POST,/chat/exchange/{matching_request_id},,matching_request_id,"{""accept"": bool}",,스키마 구현 안함
+Todo,"Todo 생성
+CreateToDo",안시현,POST,/todo,,,"{
+""matching_id"": str,
+""skill_id"": str
+""task"": str
+}",,
+Todo,"내 Todo 조회
+ViewMyToDo",안시현,GET,/todo/my-tasks,,,,"[
+     {
+           ""todo_id"": int, 
+           ""task"": str, 
+           ""is_completed"": bool
+      }
+]",
+Todo,"상대 Todo 조회
+ViewOpponentToDo",안시현,GET,/todo/{matching_id}/opponent-tasks,,matching_id,,"[
+     {
+           ""todo_id"": int, 
+           ""task"": str, 
+           ""is_completed"": bool
+      }
+]",
+Todo,"Todo 업데이트
+UpdateToDo",안시현,PATCH,/todo/{todo_id},,,"{
+  ""task"": ""str"",
+  ""is_completed"": ""bool""
+}","{
+  ""todo_id"": ""int"",
+  ""task"": ""str"",
+  ""is_completed"": ""bool""
+}",
+Todo,"todo 후보 생성
+CreateToDoCandidate",안시현,POST,/todo/generated_todo,,,"{
+    ""room_id"": str
+}","[
+    {
+        ""id"": str,
+        ""name"": str,
+        ""skill"": str
+    }
+]",
+Todo,"todo 후보 조회
+ViewToDoCandidate",안시현,GET,/todo/generated_todo,,,,"[
+    {
+        ""id"": str,
+        ""name"": str,
+        ""skill"": str
+    }
+]",
+Todo,"todo 후보 채택
+SelectToDoCandidate",안시현,POST,/todo,target_id (후보의 id),,,,스키마 구현 안함
+User,"유저 프로필 조회 
+SearchUserProfile",김재훈,GET,/user/{user_id}/profile,user_id,,"{
+""name"": str,
+ ""email"": str,
+ ""teaching_skills"": [str], 
+""learning_skills"": [str]
+}",,
+User,"내 정보 수정
+EditMyProfile",김재훈,PATCH,/user/me,,,"{
+""name"": str,
+""description"": str
+}",,
+Announcement,"공고 조회
+ViewAnnounce",한준희,GET,/announcement/all,,,,"[
+    {
+        ""id"": str
+        ""username"": str,
+        ""user_id"": str,
+        ""want_to_skill"": str,
+        ""can_teach_skill"": str
+    }
+]",
+Announcement,"공고 상세 조회
+ViewDetailAnnounce",한준희,GET,/announcement/detail/{announcement_id},,announcement_id,,"{
+  ""id"": ""str"",
+  ""userId"": ""str"",
+  ""wantToSkill"": ""str"",
+  ""canTeachSkill"": ""str"",
+  ""wantToMessage"": ""str"",
+  ""canTeachMessage"": ""str"",
+  ""canTeachDifficulty"": ""str"",
+  ""wantToDifficulty"": ""str""
+}",
+Announcement,"공고 등록
+CreateAnnounce",한준희,POST,/announcement,,,"{
+  ""wantToSkill"": ""str"",
+  ""canTeachSkill"": ""str"",
+  ""wantToMessage"": ""str"",
+  ""canTeachMessage"": ""str"",
+  ""canTeachDifficulty"": ""str"",
+  ""wantToDifficulty"": ""str""
+}",,
+Announcement,"공고 수정
+EditAnnounce",한준희,PATCH,/announcement/{announcement_id},,announcement_id,"{
+  ""wantToSkill"": ""uuid.UUID"",
+  ""canTeachSkill"": ""uuid.UUID"",
+  ""wantToMessage"": ""str"",
+  ""canTeachMessage"": ""str"",
+  ""canTeachDifficulty"": ""str"",
+  ""wantToDifficulty"": ""str""
+}","{
+  ""id"": ""str"",
+  ""userId"": ""str"",
+  ""wantToSkill"": ""str"",
+  ""canTeachSkill"": ""str"",
+  ""wantToMessage"": ""str"",
+  ""canTeachMessage"": ""str"",
+  ""canTeachDifficulty"": ""str"",
+  ""wantToDifficulty"": ""str""
+}",
