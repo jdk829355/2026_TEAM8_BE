@@ -17,9 +17,9 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 
 
-@router.get("/{user_id}/profile", response_model=SearchUserProfileResponse)
+@router.get("/profile", response_model=SearchUserProfileResponse)
 def search_user_profile(
-    user_id: UUID,
+    user_id: UUID = Depends(get_current_user_id),
     service: UserService = Depends(get_user_service),
     db: Session = Depends(get_db),
 ):

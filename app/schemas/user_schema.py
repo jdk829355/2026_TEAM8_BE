@@ -4,8 +4,8 @@ from typing import List, Optional
 
 # Request Models
 class EditMyProfileRequest(BaseModel):
-    name: str
-    description: str
+    name: str | None = None
+    description: str | None = None
 
 
 # Response Models
