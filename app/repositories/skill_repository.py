@@ -99,7 +99,9 @@ class SkillRepository:
         query = db.query(Skill)
         if keyword is not None and keyword.strip():
             pattern = f"%{keyword.strip()}%"
-            query = query.filter(Skill.name.ilike(pattern) | Skill.category.ilike(pattern))
+            query = query.filter(
+                Skill.name.ilike(pattern) | Skill.category.ilike(pattern)
+            )
         return query.order_by(Skill.name.asc()).all()
 
     def search_skill(self, db: Session, keyword: str) -> list[Skill]:
@@ -112,12 +114,11 @@ class SkillRepository:
         )
 
     def get_learning_skills_by_user(self, db: Session, user_id: UUID) -> list[Skill]:
-        """Get all learning skills for a user using join"""
         return (
             db.query(Skill)
             .join(Want, Skill.id == Want.skill_id)
             .filter(Want.user_id == user_id)
-            .order_by(Skill.name.asc())
+            .order_by(Skill.category.asc(), Skill.name.asc())
             .all()
         )
 
@@ -126,7 +127,7 @@ class SkillRepository:
             db.query(Skill)
             .join(CanTeach, Skill.id == CanTeach.skill_id)
             .filter(CanTeach.user_id == user_id)
-            .order_by(Skill.name.asc())
+            .order_by(Skill.category.asc(), Skill.name.asc())
             .all()
         )
 
@@ -149,11 +150,11 @@ class SkillRepository:
         )
 
     def get_categories(self, db: Session, keyword: str | None) -> list[str]:
-        pattern = f"%{keyword.strip()}%" if keyword is not None and keyword.strip() else None
+        pattern = (
+            f"%{keyword.strip()}%" if keyword is not None and keyword.strip() else None
+        )
         query = db.query(Skill.category).distinct().order_by(Skill.category.asc())
         if pattern:
             query = query.filter(Skill.category.ilike(pattern))
-        categories = (
-            query.all()
-        )
+        categories = query.all()
         return [category for (category,) in categories]

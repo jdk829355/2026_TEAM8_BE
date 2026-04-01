@@ -5,6 +5,7 @@ from app.repositories.skill_repository import SkillRepository
 from app.schemas.skill_schema import (
     WantToLearnRequest,
     CanToTeachRequest,
+    SkillItem,
     ViewAllSkillsResponse,
     ViewWantToLearnResponse,
     ViewCanToTeachResponse,
@@ -36,22 +37,26 @@ class SkillService:
     def add_want_to_learn(
         self, db: Session, user_id: UUID, request: WantToLearnRequest
     ) -> ViewWantToLearnResponse:
-        want_to_skills = []
-        for skill_name in request.want_to_skill:
-            skill = self.create_skill(db, skill_name)
-            self.repo.create_want(db, user_id, skill.id) # type: ignore
-            want_to_skills.append(skill.name)
+        want_to_skills: list[SkillItem] = []
+        for item in request.want_to_skill:
+            skill = self.create_skill(db, item.name, item.category)
+            self.repo.create_want(db, user_id, skill.id)  # type: ignore
+            want_to_skills.append(
+                SkillItem(name=skill.name, category=skill.category),  # type: ignore
+            )
 
         return ViewWantToLearnResponse(want_to_skill=want_to_skills)
 
     def add_can_teach(
         self, db: Session, user_id: UUID, request: CanToTeachRequest
     ) -> ViewCanToTeachResponse:
-        can_teach_skills = []
-        for skill_name in request.can_teach_skill:
-            skill = self.create_skill(db, skill_name)
-            self.repo.create_can_teach(db, user_id, skill.id) # type: ignore
-            can_teach_skills.append(skill.name)
+        can_teach_skills: list[SkillItem] = []
+        for item in request.can_teach_skill:
+            skill = self.create_skill(db, item.name, item.category)
+            self.repo.create_can_teach(db, user_id, skill.id)  # type: ignore
+            can_teach_skills.append(
+                SkillItem(name=skill.name, category=skill.category),  # type: ignore
+            )
 
         return ViewCanToTeachResponse(can_teach_skill=can_teach_skills)
 
@@ -59,23 +64,35 @@ class SkillService:
         want_to_skills_obj = self.repo.get_learning_skills_by_user(db, user_id)
         can_teach_skills_obj = self.repo.get_teaching_skills_by_user(db, user_id)
 
-        want_to_skills = [skill.name for skill in want_to_skills_obj]
-        can_teach_skills = [skill.name for skill in can_teach_skills_obj]
+        want_to_skills = [
+            SkillItem(name=skill.name, category=skill.category)  # type: ignore
+            for skill in want_to_skills_obj
+        ]
+        can_teach_skills = [
+            SkillItem(name=skill.name, category=skill.category)  # type: ignore
+            for skill in can_teach_skills_obj
+        ]
 
         return ViewAllSkillsResponse(
-            can_teach_skill=can_teach_skills, # type: ignore
-            want_to_skill=want_to_skills, # type: ignore
+            can_teach_skill=can_teach_skills,  # type: ignore
+            want_to_skill=want_to_skills,  # type: ignore
         )
 
     def get_want_to_learn(self, db: Session, user_id: UUID) -> ViewWantToLearnResponse:
         want_to_skills_obj = self.repo.get_learning_skills_by_user(db, user_id)
-        want_to_skills = [skill.name for skill in want_to_skills_obj]
-        return ViewWantToLearnResponse(want_to_skill=want_to_skills) # type: ignore
+        want_to_skills = [
+            SkillItem(name=skill.name, category=skill.category)  # type: ignore
+            for skill in want_to_skills_obj
+        ]
+        return ViewWantToLearnResponse(want_to_skill=want_to_skills)
 
     def get_can_teach(self, db: Session, user_id: UUID) -> ViewCanToTeachResponse:
         can_teach_skills_obj = self.repo.get_teaching_skills_by_user(db, user_id)
-        can_teach_skills = [skill.name for skill in can_teach_skills_obj]
-        return ViewCanToTeachResponse(can_teach_skill=can_teach_skills) # type: ignore
+        can_teach_skills = [
+            SkillItem(name=skill.name, category=skill.category)  # type: ignore
+            for skill in can_teach_skills_obj
+        ]
+        return ViewCanToTeachResponse(can_teach_skill=can_teach_skills)
 
     def edit_want_to_learn(
         self, db: Session, user_id: UUID, request: EditWantToLearnRequest
@@ -83,7 +100,7 @@ class SkillService:
         # Delete all existing wants
         wants = db.query(Want).filter(Want.user_id == user_id).all()
         for want in wants:
-            self.repo.delete_want(db, user_id, want.skill_id) # type: ignore
+            self.repo.delete_want(db, user_id, want.skill_id)  # type: ignore
 
         # Add new wants
         return self.add_want_to_learn(
@@ -98,7 +115,7 @@ class SkillService:
         # Delete all existing can teaches
         can_teaches = db.query(CanTeach).filter(CanTeach.user_id == user_id).all()
         for can_teach in can_teaches:
-            self.repo.delete_can_teach(db, user_id, can_teach.skill_id) # type: ignore
+            self.repo.delete_can_teach(db, user_id, can_teach.skill_id)  # type: ignore
 
         # Add new can teaches
         return self.add_can_teach(
@@ -111,14 +128,14 @@ class SkillService:
         skill = self.repo.get_skill_by_name(db, skill_name)
         if skill is None:
             return False
-        return self.repo.delete_want(db, user_id, skill.id) # type: ignore
+        return self.repo.delete_want(db, user_id, skill.id)  # type: ignore
 
     def delete_can_teach(self, db: Session, user_id: UUID, skill_name: str) -> bool:
         skill = self.repo.get_skill_by_name(db, skill_name)
         if skill is None:
             return False
-        return self.repo.delete_can_teach(db, user_id, skill.id) # type: ignore
-    
+        return self.repo.delete_can_teach(db, user_id, skill.id)  # type: ignore
+
     # 추가 구현 (정대균)
     def search_skills(self, db: Session, keyword: str) -> list[Skill]:
         return self.repo.search_skill(db, keyword)
@@ -139,5 +156,7 @@ class SkillService:
     ) -> list[Skill]:
         return self.repo.get_skill_list_by_keyword(db, keyword)
 
-    def get_skill_categories(self, db: Session, keyword: str | None) -> list[str]:
+    def get_skill_categories(
+        self, db: Session, keyword: str | None = None
+    ) -> list[str]:
         return self.repo.get_categories(db, keyword)
