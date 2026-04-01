@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 
+
 # Request Models
 class CreateAnnounceRequest(BaseModel):
-    wantToSkill: str
-    canTeachSkill: str
-    wantToMessage: str
-    canTeachMessage: str
-    canTeachDifficulty: str
-    wantToDifficulty: str
+    want_to_skill: str
+    can_teach_skill: str
+    want_to_message: str
+    can_teach_message: str
+    can_teach_difficulty: str
+    want_to_difficulty: str
 
 
 class EditAnnounceRequest(BaseModel):
@@ -23,29 +24,29 @@ class EditAnnounceRequest(BaseModel):
 class AnnounceItem(BaseModel):
     id: str
     username: str
-    userId: str
-    wantToSkill: str
-    canTeachSkill: str
+    user_id: str
+    want_to_skill: str
+    can_teach_skill: str
 
 
 class ViewDetailAnnounceResponse(BaseModel):
     id: str
-    userId: str
+    user_id: str
     username: str
-    wantToSkill: str
-    canTeachSkill: str
-    wantToMessage: str
-    canTeachMessage: str
-    canTeachDifficulty: str
-    wantToDifficulty: str
+    want_to_skill: str
+    can_teach_skill: str
+    want_to_message: str
+    can_teach_message: str
+    can_teach_difficulty: str
+    want_to_difficulty: str
 
 
 class EditAnnounceResponse(BaseModel):
     id: str
-    userId: str
-    wantToSkill: str
-    canTeachSkill: str
-    wantToMessage: str
-    canTeachMessage: str
-    canTeachDifficulty: str
-    wantToDifficulty: str
+    user_id: str
+    want_to_skill: str
+    can_teach_skill: str
+    want_to_message: str
+    can_teach_message: str
+    can_teach_difficulty: str
+    want_to_difficulty: str
