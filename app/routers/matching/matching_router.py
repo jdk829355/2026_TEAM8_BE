@@ -1,3 +1,5 @@
+
+
 import logging
 from uuid import UUID
 
@@ -9,6 +11,11 @@ from app.core.verify_jwt import get_current_user_id
 from app.dependencies.database import get_db
 from app.realtime.channels import user_event
 from app.schemas.matching_schema import AcceptMatchingRequest, MatchingRequestsResponse
+from app.schemas.matching_schema import (
+    MatchingItem,
+    ViewMyMatchingListResponse,
+    ViewDetailMatchingResponse
+)
 from app.services.matching_service import MatchingService
 from app.realtime.publisher import publisher
 
@@ -27,20 +34,56 @@ async def get_matching_requests(user_id: UUID = Depends(get_current_user_id), se
         logger.exception("failed to get matching requests"+str(exc))
         raise HTTPException(status_code=500, detail="failed to get matching requests") from exc
 
-@router.get("/all")
-def get_all_matchings():
-    return {"message": "get_all_matchings handler"}
+@router.get("/all", response_model=List[MatchingItem])
+async def get_all_matchings(service: MatchingService = Depends(get_matching_service),
+    db: Session = Depends(get_db)
+):
+    
+    logger = logging.getLogger(__name__)
+    try:
+        result = service.get_all_matching(db=db)
+        return result
+    except Exception as exc:
+        logger.exception("failed to get all matching"+str(exc))
+        raise HTTPException(status_code=500, detail="failed to get all matchings") from exc
 
 
-@router.get("/my")
-def get_my_matchings():
-    return {"message": "get_my_matchings handler"}
+@router.get("/my", response_model = ViewMyMatchingListResponse)
+async def get_my_matching(user_id: UUID = Depends(get_current_user_id), service: MatchingService = Depends(get_matching_service), db: Session = Depends(get_db))
+    logger = logging.getLogger(__name__)
+
+    try:
+        result = service.get_my_matchings(db=db, user_id=user_id)
+        return result
+    except Exception as exc:
+        logger.exception("failed to get my matchings " + str(exc))
+        raise HTTPException(status_code=500, detail="failed to get my matchings") from exc
 
 
-@router.get("/{id}")
-def get_matching_detail(id: str):
-    _ = id
-    return {"message": "get_matching_detail handler"}
+@router.get("/{id}", response_model= ViewDetailMatchingResponse)
+async def get_matching_detail(
+    id: str,
+    service: MatchingService = Depends(get_matching_service),
+    db: Session = Depends(get_db)
+):
+    logger = logging.getLogger(__name__)
+
+    try:
+        matching_id = UUID(id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="invalid id") from exc
+
+    try:
+        result = service.get_matching_detail(
+            db=db,
+            matching_id=matching_id
+        )
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("failed to get matching detail " + str(exc))
+        raise HTTPException(status_code=500, detail="failed to get matching detail") from exc
 
 
 @router.post("/{matching_request_id}/accept")
