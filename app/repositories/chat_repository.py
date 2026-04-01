@@ -16,10 +16,20 @@ class ChatRepository:
         self,
         db: Session,
         user_id: UUID,
-    ) -> List[Row[Tuple[UUID, str, str, datetime]]]:
+    ) -> List[Row[Tuple[UUID, str, str, str, datetime]]]:
         me = aliased(JoinChat)
-        peer = aliased(JoinChat)
         opponent = aliased(User)
+
+        opponent_user_id_subquery = (
+            db.query(JoinChat.user_id)
+            .filter(
+                JoinChat.room_id == Chatroom.id,
+                JoinChat.user_id != user_id,
+            )
+            .limit(1)
+            .correlate(Chatroom)
+            .scalar_subquery()
+        )
 
         latest_message_subquery = (
             db.query(
@@ -33,7 +43,8 @@ class ChatRepository:
         return (
             db.query(
                 Chatroom.id.label("room_id"),
-                opponent.name.label("opponent_name"),
+                func.coalesce(opponent.name, "").label("opponent_name"),
+                func.coalesce(Chatroom.name, "").label("name"),
                 func.coalesce(ChatLog.content, "").label("last_message"),
                 func.coalesce(
                     latest_message_subquery.c.latest_timestamp,
@@ -41,8 +52,7 @@ class ChatRepository:
                 ).label("updated_at"),
             )
             .join(me, me.room_id == Chatroom.id)
-            .join(peer, and_(peer.room_id == Chatroom.id, peer.user_id != user_id))
-            .join(opponent, opponent.id == peer.user_id)
+            .outerjoin(opponent, opponent.id == opponent_user_id_subquery)
             .outerjoin(
                 latest_message_subquery,
                 latest_message_subquery.c.room_id == Chatroom.id,
