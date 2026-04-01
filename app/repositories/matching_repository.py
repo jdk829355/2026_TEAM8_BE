@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Any
 from uuid import UUID
+from app.models import User
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.models.announcement_models import Announcement
 from app.models.chat_models import Chatroom, MatchingRequest
@@ -87,7 +88,7 @@ class MatchingRepository:
         self,
         db: Session,
         matching_request_id: UUID,
-    ) -> tuple[UUID, UUID, UUID] | None:
+    ) -> tuple[UUID, UUID, UUID, UUID] | None:
         matching_request = (
             db.query(MatchingRequest)
             .filter(MatchingRequest.id == matching_request_id)
@@ -149,7 +150,7 @@ class MatchingRepository:
             db.rollback()
             raise
 
-        return (matching.id, host_user_id, guest_user_id)  # type: ignore
+        return (matching.id, host_user_id, guest_user_id, announcement.id)  # type: ignore
 
     def matching_request_info(self, db: Session, matching_request_id: UUID) -> dict[str, Any] | None:
         matching_request = (
@@ -196,3 +197,20 @@ class MatchingRepository:
         db.delete(matching_request)
         db.commit()
         return True
+
+    def get_matching_request(self, db: Session, user_id: UUID) -> tuple[list[tuple[MatchingRequest, str]], list[tuple[MatchingRequest, str]]]:
+
+
+        matching_request_send = (
+            db.query(MatchingRequest, User.name.label("opponent_name"))
+            .filter(MatchingRequest.from_user_id == user_id)
+            .join(User, User.id == MatchingRequest.to_user_id)
+            .all()
+        )
+        matching_reqeust_receive = (
+            db.query(MatchingRequest, User.name.label("opponent_name"))
+            .filter(MatchingRequest.to_user_id == user_id)
+            .join(User, User.id == MatchingRequest.from_user_id)
+            .all()
+        )
+        return matching_request_send, matching_reqeust_receive

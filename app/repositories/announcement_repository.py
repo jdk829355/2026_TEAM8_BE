@@ -26,6 +26,7 @@ class AnnouncementRepository:
                 teach_skill.name.label("can_teach_name"),
                 User.name.label("user_name"),
             )
+            .filter(Announcement.visible == True)
             .join(want_skill, Announcement.want_to_skill == want_skill.id)
             .join(teach_skill, Announcement.can_teach_skill == teach_skill.id)
             .join(User, User.id == Announcement.user_id)

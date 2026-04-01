@@ -108,3 +108,5 @@ def get_chat_room(
 def evaluate_chat_room_ai(room_id: str):
     _ = room_id
     return {"message": "evaluate_chat_room_ai handler"}
+
+

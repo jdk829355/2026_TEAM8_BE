@@ -70,8 +70,9 @@ def get_skill_service(
 @lru_cache()
 def get_matching_service(
     repo: MatchingRepository = Depends(get_matching_repository),
+    announcement_repo: AnnouncementRepository = Depends(get_announcement_repository),
 ) -> MatchingService:
-    return MatchingService(repo)
+    return MatchingService(repo, announcement_repo)
 
 
 @lru_cache()
