@@ -6,7 +6,12 @@ from app.models.user_models import User
 
 
 class UserRepository:
-    def update_user(self, db: Session, user_id: uuid.UUID, payload: dict):
+    def get_user_by_id(self, db: Session, user_id: uuid.UUID) -> User | None:
+        """유저 ID로 유저 조회"""
+        return db.query(User).filter(User.id == user_id).first()
+
+    def update_user(self, db: Session, user_id: uuid.UUID, payload: dict) -> User | None:
+        """유저 정보 업데이트"""
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
             return None
