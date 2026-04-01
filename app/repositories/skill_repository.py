@@ -6,8 +6,8 @@ from app.models.skill_models import CanTeach, Skill, Want
 
 
 class SkillRepository:
-    def create_skill(self, db: Session, name: str) -> Skill:
-        skill = Skill(name=name)
+    def create_skill(self, db: Session, name: str, category: str = "general") -> Skill:
+        skill = Skill(name=name, category=category)
         db.add(skill)
         db.commit()
         db.refresh(skill)
@@ -93,6 +93,17 @@ class SkillRepository:
     def get_skill_list(self, db: Session) -> list[Skill]:
         return db.query(Skill).order_by(Skill.name.asc()).all()
 
+    def get_skill_list_by_keyword(
+        self, db: Session, keyword: str | None
+    ) -> list[Skill]:
+        query = db.query(Skill)
+        if keyword is not None and keyword.strip():
+            pattern = f"%{keyword.strip()}%"
+            query = query.filter(
+                Skill.name.ilike(pattern) | Skill.category.ilike(pattern)
+            )
+        return query.order_by(Skill.name.asc()).all()
+
     def search_skill(self, db: Session, keyword: str) -> list[Skill]:
         pattern = f"%{keyword.strip()}%"
         return (
@@ -103,12 +114,11 @@ class SkillRepository:
         )
 
     def get_learning_skills_by_user(self, db: Session, user_id: UUID) -> list[Skill]:
-        """Get all learning skills for a user using join"""
         return (
             db.query(Skill)
             .join(Want, Skill.id == Want.skill_id)
             .filter(Want.user_id == user_id)
-            .order_by(Skill.name.asc())
+            .order_by(Skill.category.asc(), Skill.name.asc())
             .all()
         )
 
@@ -117,9 +127,34 @@ class SkillRepository:
             db.query(Skill)
             .join(CanTeach, Skill.id == CanTeach.skill_id)
             .filter(CanTeach.user_id == user_id)
-            .order_by(Skill.name.asc())
+            .order_by(Skill.category.asc(), Skill.name.asc())
             .all()
         )
 
     def get_skill_by_name(self, db: Session, name: str) -> Skill | None:
         return db.query(Skill).filter(Skill.name.ilike(name)).first()
+
+    def get_skill_by_name_and_category(
+        self,
+        db: Session,
+        name: str,
+        category: str,
+    ) -> Skill | None:
+        return (
+            db.query(Skill)
+            .filter(
+                Skill.name.ilike(name),
+                Skill.category.ilike(category),
+            )
+            .first()
+        )
+
+    def get_categories(self, db: Session, keyword: str | None) -> list[str]:
+        pattern = (
+            f"%{keyword.strip()}%" if keyword is not None and keyword.strip() else None
+        )
+        query = db.query(Skill.category).distinct().order_by(Skill.category.asc())
+        if pattern:
+            query = query.filter(Skill.category.ilike(pattern))
+        categories = query.all()
+        return [category for (category,) in categories]

@@ -10,7 +10,8 @@ class Skill(Base):
     __tablename__ = "SKILL"
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
-    name = Column(Text)
+    name = Column(Text, nullable=False, index=True)
+    category = Column(Text, nullable=False, index=True)
 
 
 class Want(Base):

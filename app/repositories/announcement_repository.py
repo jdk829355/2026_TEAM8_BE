@@ -57,7 +57,7 @@ class AnnouncementRepository:
             .first()
         )
 
-        return result
+        return result # type: ignore
 
     def get_by_id(self, db: Session, announcement_id: UUID) -> Announcement | None:
         result = db.query(Announcement).filter(Announcement.id == announcement_id).first()
@@ -78,7 +78,7 @@ class AnnouncementRepository:
         db.commit()
         db.refresh(announcement)
 
-        res = self.get_by_id_detail(db, announcement.id)
+        res = self.get_by_id_detail(db, announcement.id) # type:ignore
         if not res:
             raise ValueError(f"Announcement with id {announcement.id} does not exist")
 
@@ -94,4 +94,4 @@ class AnnouncementRepository:
 
     def skill_name_to_id(self, db: Session, skill_name: str) -> UUID | None:
         skill = db.query(Skill).filter(Skill.name == skill_name).first()
-        return skill.id if skill else None
+        return skill.id if skill else None  # type: ignore
