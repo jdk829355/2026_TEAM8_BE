@@ -11,12 +11,11 @@ class CreateToDoRequest(BaseModel):
     task: str
 
 class UpdateToDoRequest(BaseModel):
-    task: str
     is_completed: bool
 
 # Response Models
 class ToDoItem(BaseModel):
-    todo_id: int
+    todo_id: str
     task: str
     is_completed: bool
 
@@ -27,7 +26,7 @@ class ViewOpponentToDoResponse(BaseModel):
     items: List[ToDoItem]
 
 class UpdateToDoResponse(BaseModel):
-    todo_id: int
+    todo_id: str
     task: str
     is_completed: bool
 

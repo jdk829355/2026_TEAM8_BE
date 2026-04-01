@@ -13,15 +13,7 @@ class Task(Base):
     skill_id = Column(Uuid, ForeignKey("SKILL.id"))
     matching_id = Column(Uuid, ForeignKey("MATCHING.id"))
     name = Column(String(255))
-
-
-class Todo(Base):
-    __tablename__ = "TODO"
-
-    user_id = Column(Uuid, ForeignKey("USER.id"), primary_key=True)
-    task_id = Column(Uuid, ForeignKey("TASK.id"), primary_key=True)
-    skill_id = Column(Uuid, ForeignKey("SKILL.id"), primary_key=True)
-    matching_id = Column(Uuid, ForeignKey("MATCHING.id"), primary_key=True)
+    user_id = Column(Uuid, nullable=False)
     is_completed = Column(Boolean, default=False)
 
 

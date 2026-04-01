@@ -9,7 +9,7 @@ from app.models.chat_models import (
 )
 from app.models.matching_models import Matching, Teach
 from app.models.skill_models import CanTeach, Skill, Want
-from app.models.todo_models import GeneratedTodo, Task, Todo
+from app.models.todo_models import GeneratedTodo, Task
 from app.models.user_models import User
 
 __all__ = [
@@ -26,7 +26,6 @@ __all__ = [
     "Skill",
     "Task",
     "Teach",
-    "Todo",
     "User",
     "Want",
 ]
