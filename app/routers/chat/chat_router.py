@@ -28,23 +28,23 @@ router = APIRouter(
 @router.get("/rooms", response_model=list[ChatRoomInfo])
 def get_chat_rooms(
     db: Session = Depends(get_db),
-    user_id: str = Depends(get_current_user_id),
+    user_id: UUID = Depends(get_current_user_id),
     service: ChatService = Depends(get_chat_service),
 ) -> list[ChatRoomInfo]:
-    return service.getChatRooms(db=db, user_id=UUID(user_id))
+    return service.getChatRooms(db=db, user_id=user_id)
 
 
 @router.post("/room", response_model=CreateRoomResponse)
 def create_chat_room(
     create_room_request: CreateRoomRequest,
-    user_id: str = Depends(get_current_user_id),
+    user_id: UUID = Depends(get_current_user_id),
     service: ChatService = Depends(get_chat_service),
     db: Session = Depends(get_db),
 ):
     room = service.create_chat_room(
         db=db,
         announcement_id=create_room_request.announcement_id,
-        user_id=UUID(user_id),
+        user_id=user_id,
         name=create_room_request.name,
     )
     return CreateRoomResponse(room_id=room.id)  # type: ignore
@@ -94,8 +94,9 @@ def get_chat_room(
     last_message_id: str | None = None,
     service: ChatService = Depends(get_chat_service),
     db: Session = Depends(get_db),
-    user_id: str = Depends(get_current_user_id),
+    user_id: UUID = Depends(get_current_user_id),
 ):
+    _ = user_id
     return service.get_chat_logs(
         db=db,
         room_id=UUID(room_id),
@@ -107,3 +108,5 @@ def get_chat_room(
 def evaluate_chat_room_ai(room_id: str):
     _ = room_id
     return {"message": "evaluate_chat_room_ai handler"}
+
+

@@ -18,5 +18,5 @@ class Teach(Base):
 
     teacher_id = Column(Uuid, ForeignKey("USER.id"), primary_key=True)
     skill_id = Column(Uuid, ForeignKey("SKILL.id"), primary_key=True)
-    matching_id = Column(Uuid, ForeignKey("MATCHING.id"), primary_key=True)
+    matching_id = Column(Uuid, ForeignKey("MATCHING.id", ondelete="CASCADE"), primary_key=True)
     status = Column(String(100))

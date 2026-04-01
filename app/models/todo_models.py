@@ -12,8 +12,8 @@ class Task(Base):
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
     skill_id = Column(Uuid, ForeignKey("SKILL.id"))
     matching_id = Column(Uuid, ForeignKey("MATCHING.id"))
+    user_id = Column(Uuid, ForeignKey("USER.id"))
     name = Column(String(255))
-    user_id = Column(Uuid, nullable=False)
     is_completed = Column(Boolean, default=False)
 
 

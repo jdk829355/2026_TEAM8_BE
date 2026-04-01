@@ -28,45 +28,46 @@ class SkillService:
     def add_want_to_learn(
         self, db: Session, user_id: UUID, request: WantToLearnRequest
     ) -> ViewWantToLearnResponse:
-        learning_skills = []
-        for skill_name in request.learning_skill:
+        want_to_skills = []
+        for skill_name in request.want_to_skill:
             skill = self.create_skill(db, skill_name)
             self.repo.create_want(db, user_id, skill.id)
-            learning_skills.append(skill.name)
+            want_to_skills.append(skill.name)
 
-        return ViewWantToLearnResponse(learning_skill=learning_skills)
+        return ViewWantToLearnResponse(want_to_skill=want_to_skills)
 
     def add_can_teach(
         self, db: Session, user_id: UUID, request: CanToTeachRequest
     ) -> ViewCanToTeachResponse:
-        teaching_skills = []
-        for skill_name in request.teaching_skill:
+        can_teach_skills = []
+        for skill_name in request.can_teach_skill:
             skill = self.create_skill(db, skill_name)
             self.repo.create_can_teach(db, user_id, skill.id)
-            teaching_skills.append(skill.name)
+            can_teach_skills.append(skill.name)
 
-        return ViewCanToTeachResponse(teaching_skill=teaching_skills)
+        return ViewCanToTeachResponse(can_teach_skill=can_teach_skills)
 
     def get_all_skills(self, db: Session, user_id: UUID) -> ViewAllSkillsResponse:
-        learning_skills_obj = self.repo.get_learning_skills_by_user(db, user_id)
-        teaching_skills_obj = self.repo.get_teaching_skills_by_user(db, user_id)
+        want_to_skills_obj = self.repo.get_learning_skills_by_user(db, user_id)
+        can_teach_skills_obj = self.repo.get_teaching_skills_by_user(db, user_id)
 
-        learning_skills = [skill.name for skill in learning_skills_obj]
-        teaching_skills = [skill.name for skill in teaching_skills_obj]
+        want_to_skills = [skill.name for skill in want_to_skills_obj]
+        can_teach_skills = [skill.name for skill in can_teach_skills_obj]
 
         return ViewAllSkillsResponse(
-            teaching_skill=teaching_skills, learning_skill=learning_skills
+            can_teach_skill=can_teach_skills,
+            want_to_skill=want_to_skills,
         )
 
     def get_want_to_learn(self, db: Session, user_id: UUID) -> ViewWantToLearnResponse:
-        learning_skills_obj = self.repo.get_learning_skills_by_user(db, user_id)
-        learning_skills = [skill.name for skill in learning_skills_obj]
-        return ViewWantToLearnResponse(learning_skill=learning_skills)
+        want_to_skills_obj = self.repo.get_learning_skills_by_user(db, user_id)
+        want_to_skills = [skill.name for skill in want_to_skills_obj]
+        return ViewWantToLearnResponse(want_to_skill=want_to_skills)
 
     def get_can_teach(self, db: Session, user_id: UUID) -> ViewCanToTeachResponse:
-        teaching_skills_obj = self.repo.get_teaching_skills_by_user(db, user_id)
-        teaching_skills = [skill.name for skill in teaching_skills_obj]
-        return ViewCanToTeachResponse(teaching_skill=teaching_skills)
+        can_teach_skills_obj = self.repo.get_teaching_skills_by_user(db, user_id)
+        can_teach_skills = [skill.name for skill in can_teach_skills_obj]
+        return ViewCanToTeachResponse(can_teach_skill=can_teach_skills)
 
     def edit_want_to_learn(
         self, db: Session, user_id: UUID, request: EditWantToLearnRequest
@@ -78,7 +79,9 @@ class SkillService:
 
         # Add new wants
         return self.add_want_to_learn(
-            db, user_id, WantToLearnRequest(learning_skill=request.learning_skill)
+            db,
+            user_id,
+            WantToLearnRequest(want_to_skill=request.want_to_skill),
         )
 
     def edit_can_teach(
@@ -91,12 +94,12 @@ class SkillService:
 
         # Add new can teaches
         return self.add_can_teach(
-            db, user_id, CanToTeachRequest(teaching_skill=request.teaching_skill)
+            db,
+            user_id,
+            CanToTeachRequest(can_teach_skill=request.can_teach_skill),
         )
 
-    def delete_want_to_learn(
-        self, db: Session, user_id: UUID, skill_name: str
-    ) -> bool:
+    def delete_want_to_learn(self, db: Session, user_id: UUID, skill_name: str) -> bool:
         skill = self.repo.get_skill_by_name(db, skill_name)
         if skill is None:
             return False

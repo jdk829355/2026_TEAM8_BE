@@ -12,7 +12,7 @@ class Chatroom(Base):
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
-    matching_id = Column(Uuid, ForeignKey("MATCHING.id"))
+    matching_id = Column(Uuid, ForeignKey("MATCHING.id", ondelete="CASCADE"))
     announcement_id = Column(Uuid, ForeignKey("ANNOUNCEMENT.id"))
     user_id = Column(Uuid, ForeignKey("USER.id"))
 
@@ -38,7 +38,7 @@ class ChatLog(Base):
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
     author_id = Column(Uuid, ForeignKey("USER.id"))
-    room_id = Column(Uuid, ForeignKey("CHATROOM.id"))
+    room_id = Column(Uuid, ForeignKey("CHATROOM.id", ondelete="SET NULL"))
     content = Column(Text)
     timestamp = Column(DateTime, default=datetime.now(timezone.utc))
     read = Column(Boolean, default=False)
