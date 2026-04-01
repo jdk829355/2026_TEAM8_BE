@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import List
+from app.core.verify_jwt import get_current_user_id
 
 from app.dependencies.database import get_db
 from app.repositories.todo_repository import TodoRepository
@@ -46,8 +47,11 @@ def get_my_tasks(
     return {"items": [
     {
         "todo_id": str(t.id), 
-        "task": t.name if t.name else "이름 없음",
-        "is_completed": t.is_completed
+        "name": t.name,
+        "skill": t.skill.name,
+        "is_completed": t.is_completed,
+        "matching_id": str(t.matching_id),
+        "matching_name": str(t.matching_id)
     } for t in tasks
     ]}
 
@@ -66,8 +70,8 @@ def create_todo(
         db, 
         user_id=TEST_USER_ID,
         matching_id=UUID(request.matching_id),
-        skill_id=UUID(request.skill_id),
-        task_name=request.task
+        skill=request.skill,
+        task_name=request.name
     )
 
 
@@ -81,16 +85,23 @@ def update_todo(
     """
     용도: 할 일의 완료 상태(체크박스)를 업데이트합니다.
     """
-    updated = service.update_todo_status(db, TEST_USER_ID, task_id, request.is_completed)
-    if not updated:
+    # 2. 서비스에서 업데이트된 객체를 받아옵니다.
+    updated_task = service.update_todo_status(db, task_id, request.is_completed)
+    
+    if not updated_task:
         raise HTTPException(status_code=404, detail="해당 태스크를 찾을 수 없습니다.")
-    return {"message": "업데이트 성공"}
+    
+    # 3. 요구하신 형식대로 딕셔너리를 만들어서 반환합니다.
+    return {
+        "todo_id": str(updated_task.id),
+        "name": updated_task.name,
+        "is_completed": updated_task.is_completed
+    }
 
 
 @router.get("/{matching_id}/opponent-tasks", response_model=ViewMyToDoResponse)
 def get_opponent_tasks(
     matching_id: UUID,
-    opponent_id: UUID, # 실제로는 매칭 정보를 통해 서버에서 조회해야 함
     db: Session = Depends(get_db),
     service: TodoService = Depends(get_todo_service)
 ):
@@ -98,10 +109,16 @@ def get_opponent_tasks(
     용도: 매칭된 상대방의 투두 목록을 조회합니다.
     화면: '상대의 TODO' 탭 리스트업
     """
-    tasks = service.get_opponent_tasks(db, matching_id, opponent_id)
+    tasks = service.get_opponent_tasks_automatically(db, matching_id, TEST_USER_ID)
     return {"items": [
-        ToDoItem(todo_id=t.id, task=t.name, is_completed=t.is_completed) 
-        for t in tasks
+        {
+            "todo_id": str(t.id),
+            "name": t.name,
+            "skill": t.skill.name,
+            "is_completed": t.is_completed,
+            "matching_id": str(t.matching_id),
+            "matching_name": t.matching_name
+        } for t in tasks
     ]}
 
 
@@ -109,17 +126,6 @@ def get_opponent_tasks(
 # 2. AI/채팅 추천 후보 Todo (GeneratedTodo)
 # ---------------------------------------------------------
 
-@router.post("/generated_todo", response_model=ViewToDoCandidateResponse)
-def create_generated_todo(
-    request: CreateToDoCandidateRequest,
-    db: Session = Depends(get_db),
-    service: TodoService = Depends(get_todo_service)
-):
-    """
-    용도: 대화 로그를 기반으로 AI가 추천하는 투두 후보군을 생성합니다.
-    """
-    # 실제 구현 시에는 AI 로직 호출 후 repo.create_generated_todo 사용
-    return {"candidates": []} 
 
 
 @router.get("/generated_todo", response_model=ViewToDoCandidateResponse)
@@ -134,6 +140,41 @@ def get_generated_todo(
     """
     candidates = service.get_candidates(db, chatroom_id)
     return {"candidates": [
-        ToDoCandidate(id=str(c.chatroom_id), name=c.name, skill=str(c.skill_id)) 
+        ToDoCandidate(id=str(c.skill_id), name=c.name, skill=str(c.skill_id)) 
         for c in candidates
     ]}
+
+@router.post("/generated_todo", response_model=ViewToDoCandidateResponse)
+def create_generated_todo(
+    request: CreateToDoCandidateRequest,
+    db: Session = Depends(get_db),
+    service: TodoService = Depends(get_todo_service)
+):
+    candidates_data = service.get_todo_candidates(db, request.room_id)
+    
+    return {"candidates": candidates_data}
+
+@router.delete("/{todo_id}")
+def delete_todo(
+    todo_id:UUID,
+    db: Session = Depends(get_db),
+    service: TodoService = Depends(get_todo_service)
+):
+    success = service.delete_todo(db, todo_id) # 이렇게 인자가 2개여야 함
+    if not success:
+        raise HTTPException(status_code=404, detail="삭제할 태스크를 찾을 수 없습니다.")
+    return {"message": "삭제 성공"}
+
+@router.post("/{target_id}/select")
+def select_todo_candidate(
+    target_id: str, 
+    db: Session = Depends(get_db),
+    service: TodoService = Depends(get_todo_service),
+    current_user = Depends(get_current_user_id) # 👈 인증된 유저 객체 주입
+):
+    # current_user 안에 로그인한 사람의 id가 들어있습니다.
+    return service.select_candidate_to_task(
+        db, 
+        user_id=current_user, 
+        target_id=target_id
+    )

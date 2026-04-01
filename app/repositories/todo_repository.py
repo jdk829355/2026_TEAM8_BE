@@ -19,12 +19,12 @@ class TodoRepository:
     
 
     # 용도: 실제 투두의 '내용'이 담긴 본체(Task)를 생성할 때 사용
-    def create_task(self, db: Session, user_id: uuid.UUID, name: str, skill_id: uuid.UUID, matching_id: uuid.UUID):
+    def create_task(self, db: Session, user_id: uuid.UUID, name: str, skill, matching_id: uuid.UUID):
         db_task = Task(
             id=uuid.uuid4(),
             user_id=user_id,
             name=name,
-            skill_id=skill_id,
+            skill_id=skill,
             matching_id=matching_id,
             is_completed=False
         )
@@ -34,12 +34,9 @@ class TodoRepository:
         return db_task
     
 
-
-
     # 용도: 화면에서 체크박스를 눌렀을 때, '완료' 또는 '미완료' 상태를 DB에 반영할 때 사용
-    def update_todo_status(self, db: Session, user_id: uuid.UUID, task_id: uuid.UUID, is_completed: bool):
+    def update_todo_status(self, db: Session, task_id: uuid.UUID, is_completed: bool):
         task = db.query(Task).filter(
-            Task.user_id == user_id,
             Task.id == task_id
         ).first()
         
@@ -72,3 +69,23 @@ class TodoRepository:
     def delete_generated_todo(self, db: Session, chatroom_id: uuid.UUID):
         db.query(GeneratedTodo).filter(GeneratedTodo.chatroom_id == chatroom_id).delete()
         db.commit()
+
+    def delete_task(self, db: Session, todo_id: uuid.UUID):
+        task = db.query(Task).filter(Task.id == todo_id).first()
+        if task:
+            db.delete(task)
+            db.commit()
+            return True
+        return False
+    
+
+    # 기존 코드들 사이에 추가
+    def get_tasks_by_room(self, db: Session, room_id: str):
+        from app.models.todo_models import GeneratedTodo # 모델 이름이 다를 수 있으니 확인!
+        
+        # 해당 채팅방(room_id)에 연결된 생성된 투두 후보들을 가져옵니다.
+        return db.query(GeneratedTodo).filter(GeneratedTodo.chatroom_id == room_id).all()
+    
+    def get_candidate_by_id(self, db: Session, target_id: str):
+        from app.models.todo_models import GeneratedTodo
+        return db.query(GeneratedTodo).filter(GeneratedTodo.todo_id == target_id).first()
