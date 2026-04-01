@@ -37,10 +37,7 @@ class UserService:
         self, db: Session, user_id: uuid.UUID, request: EditMyProfileRequest
     ) -> SearchUserProfileResponse | None:
         """내 정보 수정 (EditMyProfile)"""
-        payload = {
-            "name": request.name,
-            "description": request.description,
-        }
+        payload = request.model_dump()
         user = self.repo.update_user(db, user_id, payload)
         if user is None:
             return None
