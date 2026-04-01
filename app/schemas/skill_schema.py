@@ -31,3 +31,13 @@ class EditWantToLearnRequest(BaseModel):
 
 class EditCanToTeachRequest(BaseModel):
     can_teach_skill: List[str]
+
+
+class CreateSkillRequest(BaseModel):
+    name: str
+    category: str
+
+
+class SkillItemResponse(BaseModel):
+    name: str
+    category: str
