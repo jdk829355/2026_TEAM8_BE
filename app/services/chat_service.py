@@ -8,7 +8,6 @@ from app.schemas.chat_schema import (
     ChatLogResponse,
     ChatRoomInfo,
     WSMessageType,
-    WSSubscribeMessage,
 )
 
 
@@ -28,7 +27,7 @@ class ChatService:
     def _handle_request_matching(self, db: Session, event: dict):
         if self.check_matching_is_exists(db, event["room_id"]):
             raise Exception("이미 매칭이 존재하는 채팅방입니다.")
-        matching_request: MatchingRequest = self.repo.create_matching_request(
+        matching_request: MatchingRequest|None = self.repo.create_matching_request(
             db, event["user_id"], event["room_id"]
         )
         if matching_request is None:
@@ -57,6 +56,7 @@ class ChatService:
             ChatRoomInfo(
                 room_id=room.room_id,
                 opponent_name=room.opponent_name,
+                name=room.name,
                 last_message=room.last_message,
                 updated_at=room.updated_at.isoformat(),
             )
@@ -85,6 +85,7 @@ class ChatService:
                     content=log.content,
                     timestamp=log.timestamp.isoformat(),
                     read=log.read,
+                    message_id= str(log.id)
                 )
             )
         return res

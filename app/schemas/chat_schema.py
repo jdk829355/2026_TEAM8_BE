@@ -1,7 +1,7 @@
 from enum import Enum
 
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 
 
@@ -9,6 +9,7 @@ from uuid import UUID
 class ChatRoomInfo(BaseModel):
     room_id: UUID
     opponent_name: str
+    name: str
     last_message: str
     updated_at: str
 
@@ -17,6 +18,7 @@ class ChatLogResponse(BaseModel):
     content: str
     timestamp: str
     read: bool
+    message_id: str
 
 class CreateRoomRequest(BaseModel):
     announcement_id: UUID
@@ -36,25 +38,25 @@ class WSMessageType(str, Enum):
     RECEIVE_MATCHING = "RECEIVE_MATCHING"
 
 class WSSubscribeMessage(BaseModel):
-    type: WSMessageType
+    type: WSMessageType = WSMessageType.JOIN_CHAT
     user_id: UUID
     room_id: Optional[UUID] = None
 
 class WSSendMessage(BaseModel):
-    type: WSMessageType
+    type: WSMessageType = WSMessageType.SEND_MESSAGE # or RECV_MESSAGE (받을 때)
     user_id: UUID
     room_id: UUID
     content: str
 
 class WSRequestMatchingMessage(BaseModel):
-    type: WSMessageType
+    type: WSMessageType = WSMessageType.REQUEST_MATCHING
     user_id: UUID
     to_user_id: UUID|None = None
     room_id: UUID
     matching_request_id: UUID|None = None
 
 class WSReplyMatchingMessage(BaseModel):
-    type: WSMessageType
+    type: WSMessageType = WSMessageType.REPLY_MATCHING
     user_id: UUID
     to_user_id: UUID | None = None
     matching_request_id: UUID

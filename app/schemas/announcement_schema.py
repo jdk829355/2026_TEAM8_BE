@@ -1,23 +1,24 @@
 from pydantic import BaseModel
-from typing import List
-from uuid import UUID
+
 
 # Request Models
 class CreateAnnounceRequest(BaseModel):
-    wantToSkill: str
-    canTeachSkill: str
-    wantToMessage: str
-    canTeachMessage: str
-    canTeachDifficulty: str
-    wantToDifficulty: str
+    want_to_skill: str
+    can_teach_skill: str
+    want_to_message: str
+    can_teach_message: str
+    can_teach_difficulty: str
+    want_to_difficulty: str
+
 
 class EditAnnounceRequest(BaseModel):
-    wantToSkill: UUID
-    canTeachSkill: UUID
-    wantToMessage: str
-    canTeachMessage: str
-    canTeachDifficulty: str
-    wantToDifficulty: str
+    want_to_skill: str | None = None
+    can_teach_skill: str | None = None
+    want_to_message: str | None = None
+    can_teach_message: str | None = None
+    can_teach_difficulty: str | None = None
+    want_to_difficulty: str | None = None
+
 
 # Response Models
 class AnnounceItem(BaseModel):
@@ -27,25 +28,25 @@ class AnnounceItem(BaseModel):
     want_to_skill: str
     can_teach_skill: str
 
-class ViewAnnounceResponse(BaseModel):
-    announcements: List[AnnounceItem]
 
 class ViewDetailAnnounceResponse(BaseModel):
     id: str
-    userId: str
-    wantToSkill: str
-    canTeachSkill: str
-    wantToMessage: str
-    canTeachMessage: str
-    canTeachDifficulty: str
-    wantToDifficulty: str
+    user_id: str
+    username: str
+    want_to_skill: str
+    can_teach_skill: str
+    want_to_message: str
+    can_teach_message: str
+    can_teach_difficulty: str
+    want_to_difficulty: str
+
 
 class EditAnnounceResponse(BaseModel):
     id: str
-    userId: str
-    wantToSkill: str
-    canTeachSkill: str
-    wantToMessage: str
-    canTeachMessage: str
-    canTeachDifficulty: str
-    wantToDifficulty: str
+    user_id: str
+    want_to_skill: str
+    can_teach_skill: str
+    want_to_message: str
+    can_teach_message: str
+    can_teach_difficulty: str
+    want_to_difficulty: str

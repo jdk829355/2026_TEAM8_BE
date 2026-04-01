@@ -19,18 +19,18 @@ class UserService:
         if user is None:
             return None
 
-        # Skill 저장소에서 teaching_skills, learning_skills 조회
-        teaching_skills_obj = self.skill_repo.get_teaching_skills_by_user(db, user_id)
-        learning_skills_obj = self.skill_repo.get_learning_skills_by_user(db, user_id)
+        # Skill 저장소에서 can_teach_skills, want_to_skills 조회
+        can_teach_skills_obj = self.skill_repo.get_teaching_skills_by_user(db, user_id)
+        want_to_skills_obj = self.skill_repo.get_learning_skills_by_user(db, user_id)
 
-        teaching_skills = [skill.name for skill in teaching_skills_obj]
-        learning_skills = [skill.name for skill in learning_skills_obj]
+        can_teach_skills = [skill.name for skill in can_teach_skills_obj]
+        want_to_skills = [skill.name for skill in want_to_skills_obj]
 
         return SearchUserProfileResponse(
             name=user.name,
             email=user.email,
-            teaching_skills=teaching_skills,
-            learning_skills=learning_skills,
+            can_teach_skills=can_teach_skills,
+            want_to_skills=want_to_skills,
         )
 
     def update_my_profile(

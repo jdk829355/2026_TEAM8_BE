@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, ForeignKey, String, Text
+from sqlalchemy import Column, ForeignKey, String, Text, Boolean
 from sqlalchemy.types import Uuid
 
 from app.models.base import Base
@@ -17,3 +17,4 @@ class Announcement(Base):
     can_teach_message = Column(Text)
     can_teach_difficulty = Column(String(100))
     want_to_difficulty = Column(String(100))
+    visible = Column(Boolean, default=True, index=True)
