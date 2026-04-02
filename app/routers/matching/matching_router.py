@@ -1,5 +1,3 @@
-
-
 import logging
 from uuid import UUID
 
@@ -42,7 +40,18 @@ async def get_all_matchings(service: MatchingService = Depends(get_matching_serv
     logger = logging.getLogger(__name__)
     try:
         result = service.get_all_matching(db=db)
-        return result
+        items = [
+            MatchingItem(
+                matching_id=str(m.matching_id),
+                name=m.name,
+                teaching_skill=m.teaching_skill,
+                learning_skill=m.learning_skill,
+                status=m.status
+            )
+            for m in result
+        ]
+
+        return items
     except Exception as exc:
         logger.exception("failed to get all matching"+str(exc))
         raise HTTPException(status_code=500, detail="failed to get all matchings") from exc
@@ -53,8 +62,19 @@ async def get_my_matching(user_id: UUID = Depends(get_current_user_id), service:
     logger = logging.getLogger(__name__)
 
     try:
-        result = service.get_my_matchings(db=db, user_id=user_id)
-        return result
+        matchings = service.get_my_matchings(db=db, user_id=user_id)
+        items = [
+            MatchingItem(
+                matching_id=str(match.matching_id),  
+                name=match.name,
+                teaching_skill=match.teaching_skill,
+                learning_skill=match.learning_skill,
+                status=match.status
+            )
+            for match in matchings
+        ]
+
+        return ViewMyMatchingListResponse(items=items)
     except Exception as exc:
         logger.exception("failed to get my matchings " + str(exc))
         raise HTTPException(status_code=500, detail="failed to get my matchings") from exc
@@ -78,7 +98,12 @@ async def get_matching_detail(
             db=db,
             matching_id=matching_id
         )
-        return result
+        return ViewDetailMatchingResponse(
+            opponent_name=result.opponent_name,
+            teaching_skill=result.teaching_skill,
+            learning_skill=result.learning_skill,
+            opponent_id=str(result.opponent_id) 
+        )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
