@@ -11,7 +11,9 @@ from app.schemas.matching_schema import AcceptMatchingRequest, MatchingRequestsR
 from app.schemas.matching_schema import (
     MatchingItem,
     ViewMyMatchingListResponse,
-    ViewDetailMatchingResponse
+    ViewDetailMatchingResponse,
+    UpdateMatchingRequest,
+    UpdateMatchingResponse
 )
 from app.services.matching_service import MatchingService
 from app.realtime.publisher import publisher
@@ -31,47 +33,29 @@ async def get_matching_requests(user_id: UUID = Depends(get_current_user_id), se
         logger.exception("failed to get matching requests"+str(exc))
         raise HTTPException(status_code=500, detail="failed to get matching requests") from exc
 
-@router.get("/all", response_model=List[MatchingItem])
-async def get_all_matchings(service: MatchingService = Depends(get_matching_service),
+# app/routers/matching/matching_router.py
+
+@router.get("/my", response_model=ViewMyMatchingListResponse)
+async def get_my_matching(
+    user_id: UUID = Depends(get_current_user_id), 
+    service: MatchingService = Depends(get_matching_service), 
     db: Session = Depends(get_db)
 ):
-    
-    logger = logging.getLogger(__name__)
-    try:
-        result = service.get_all_matching(db=db)
-        items = [
-            MatchingItem(
-                matching_id=str(m.matching_id),
-                name=m.name,
-                teaching_skill=m.teaching_skill,
-                learning_skill=m.learning_skill,
-                status=m.status
-            )
-            for m in result
-        ]
-
-        return items
-    except Exception as exc:
-        logger.exception("failed to get all matching"+str(exc))
-        raise HTTPException(status_code=500, detail="failed to get all matchings") from exc
-
-
-@router.get("/my", response_model = ViewMyMatchingListResponse)
-async def get_my_matching(user_id: UUID = Depends(get_current_user_id), service: MatchingService = Depends(get_matching_service), db: Session = Depends(get_db))
-    logger = logging.getLogger(__name__)
-
     try:
         matchings = service.get_my_matchings(db=db, user_id=user_id)
-        items = [
-            MatchingItem(
-                matching_id=str(match.matching_id),  
-                name=match.name,
-                teaching_skill=match.teaching_skill,
-                learning_skill=match.learning_skill,
-                status=match.status
+        items = []
+        
+        for match in matchings:
+            items.append(
+                MatchingItem(
+                    matching_id=str(match.matching_id),  
+                    name=match.name,
+                    # 만약 리포지토리에서 skill_name으로 가져왔다면 match.skill_name 사용
+                    teaching_skill=match.skill_name if hasattr(match, 'skill_name') else "N/A",
+                    learning_skill="상세보기에서 확인", # 리스트에서 배우는 스킬까지 가져오려면 조인이 더 복잡해지므로 일단 고정값
+                    status="ACTIVE" # Teach 테이블의 status를 가져와서 써도 됩니다.
+                )
             )
-            for match in matchings
-        ]
 
         return ViewMyMatchingListResponse(items=items)
     except Exception as exc:
@@ -79,36 +63,38 @@ async def get_my_matching(user_id: UUID = Depends(get_current_user_id), service:
         raise HTTPException(status_code=500, detail="failed to get my matchings") from exc
 
 
-@router.get("/{id}", response_model= ViewDetailMatchingResponse)
+@router.get("/{id}", response_model=ViewDetailMatchingResponse)
 async def get_matching_detail(
     id: str,
+    user_id: UUID = Depends(get_current_user_id), # 현재 로그인한 유저 ID
     service: MatchingService = Depends(get_matching_service),
     db: Session = Depends(get_db)
 ):
     logger = logging.getLogger(__name__)
 
     try:
-        matching_id = UUID(id)
+        matching_uuid = UUID(id) # 변수명 중복 방지를 위해 matching_uuid로 변경
     except ValueError as exc:
         raise HTTPException(status_code=400, detail="invalid id") from exc
 
     try:
+        # 서비스 호출 시 user_id를 추가로 전달합니다.
         result = service.get_matching_detail(
             db=db,
-            matching_id=matching_id
+            id=matching_uuid,
+            current_user_id=user_id 
         )
         return ViewDetailMatchingResponse(
-            opponent_name=result.opponent_name,
-            teaching_skill=result.teaching_skill,
-            learning_skill=result.learning_skill,
-            opponent_id=str(result.opponent_id) 
+            opponent_name=result["opponent_name"],
+            teaching_skill=result["teaching_skill"],
+            learning_skill=result["learning_skill"],
+            opponent_id=result["opponent_id"],
         )
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
         logger.exception("failed to get matching detail " + str(exc))
         raise HTTPException(status_code=500, detail="failed to get matching detail") from exc
-
 
 @router.post("/{matching_request_id}/accept")
 async def accept_matching(
@@ -151,3 +137,30 @@ async def accept_matching(
         await publisher.publish(user_event(str(result["to_user_id"])), result)
     return
 
+
+# app/routers/matching/matching_router.py
+
+@router.patch("/{matching_id}", response_model=UpdateMatchingResponse)
+async def update_matching(
+    matching_id: str,
+    request_data: UpdateMatchingRequest,
+    user_id: UUID = Depends(get_current_user_id),
+    service: MatchingService = Depends(get_matching_service),
+    db: Session = Depends(get_db)
+):
+    try:
+        matching_uuid = UUID(matching_id)
+        result = service.update_matching_status(
+            db=db, 
+            matching_id=matching_uuid, 
+            user_id=user_id, 
+            data=request_data
+        )
+        return UpdateMatchingResponse(
+            name=result["name"],
+            matching_status=result["matching_status"]
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Update failed")

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List
+from typing import Literal
 
 # Response Models
 class MatchingItem(BaseModel):
@@ -15,7 +16,7 @@ class ViewDetailMatchingResponse(BaseModel):
     opponent_name: str
     teaching_skill: str
     learning_skill: str
-    message: str
+    opponent_id: str
 
 class AcceptMatchingRequest(BaseModel):
     accept: bool
@@ -37,3 +38,11 @@ class MatchingRequestsResponse(BaseModel):
     """/matching/requests 응답 전체 모델"""
     send: List[SentMatchingRequest]
     receive: List[ReceivedMatchingRequest]
+
+class UpdateMatchingRequest(BaseModel):
+    name: str
+    status: Literal["ACTIVATE", "COMPLETED"]
+
+class UpdateMatchingResponse(BaseModel):
+    name: str
+    matching_status: bool
