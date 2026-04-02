@@ -1,4 +1,4 @@
-def validate_assignments(result, participants):
+def validate_assignments(result, participants, users):
     if result.get("error"):
         return result
 
@@ -12,37 +12,20 @@ def validate_assignments(result, participants):
             "reason": reason
         })
 
+    value = [user for user in users.values()][0]
+    allowed = set(value["teach_subjects"] + value["learn_subjects"])
+
     for a in result.get("assignments", []):
-        assigned_by = a.get("assigned_by")
-        assigned_to = a.get("assigned_to")
+
         subject = a.get("subject")
 
         # 🔥 디버깅 로그
         print("검증 중:", a)
 
-        # 1️⃣ assigner 체크
-        if assigned_by not in participants:
-            reject(a, f"assigned_by 없음: {assigned_by}")
-            continue
-
-        allowed = participants[assigned_by].get("teach_subjects", [])
-
-        if not allowed:
-            reject(a, f"teach_subjects 없음: {assigned_by}")
-            continue
 
         # 2️⃣ subject 검증
         if subject not in allowed:
             reject(a, f"subject 불일치: {subject} | allowed: {allowed}")
-            continue
-
-        # 3️⃣ assigned_to 검증
-        if assigned_to not in participants:
-            reject(a, f"assigned_to 없음: {assigned_to}")
-            continue
-
-        if assigned_to == assigned_by:
-            reject(a, f"자기 자신에게 과제 할당: {assigned_to}")
             continue
 
         if not a.get("task_name") or not a.get("task_info"):

@@ -23,6 +23,10 @@ class ToDoItem(BaseModel):
     matching_name: str | None = None
     matching_id: str | None = None
 
+class GeneratedTodoItem(BaseModel): 
+    name: str
+    skill: str
+
 class ViewMyToDoResponse(BaseModel):
     items: List[ToDoItem]
 

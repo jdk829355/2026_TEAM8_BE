@@ -6,8 +6,8 @@ from openai import APIConnectionError
 from openai import APIError
 from openai import APITimeoutError
 
-from config import OPENAI_API_KEY, MODEL
-from utils.json_parser import safe_parse
+from app.dependencies.ai.config import OPENAI_API_KEY, MODEL
+from app.dependencies.ai.utils.json_parser import safe_parse
 
 
 # 🔥 base 경로

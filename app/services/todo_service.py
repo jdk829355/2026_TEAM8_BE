@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from datetime import datetime
 
 from app.schemas.todo_schema import ToDoCandidate
+from app.services.ai_service import AiService
 
 class TodoService:
     def __init__(self, repo: TodoRepository):
@@ -90,7 +91,7 @@ class TodoService:
             } for t in tasks
         ]
 
-    def create_candidate_todo(self, db: Session, room_id: str) -> list[ToDoCandidate]:
+    def create_candidate_todo(self, db: Session, room_id: str, service: AiService) -> list[ToDoCandidate]:
         
 
         announcement = self.repo.get_announcement_by_room(db, room_id)
@@ -101,8 +102,11 @@ class TodoService:
         name_to_id = {s.name: str(s.id) for s in skills} # type: ignore
 
         # TODO: 투두 후보군 만드는 로직 들어가야함
+        generated = service.create_todo_by_ai(db, UUID(room_id))
+
+
         candidates = [
-            ToDoCandidate(id=str(uuid.uuid4()), name="Python 기초 문법 익히기", skill=skill_names[0]), # type: ignore
+            ToDoCandidate(id=str(uuid.uuid4()), name=item.name, skill=item.skill) for item in generated
         ]
         
 

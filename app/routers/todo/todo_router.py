@@ -2,11 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from uuid import UUID
 from typing import List
-from app.core.dependencies import get_todo_service
+from app.core.dependencies import get_ai_service, get_todo_service
 from app.core.verify_jwt import get_current_user_id
 
 from app.dependencies.database import get_db
 from app.repositories.todo_repository import TodoRepository
+from app.services.ai_service import AiService
 from app.services.todo_service import TodoService
 from app.schemas.todo_schema import (
     CreateToDoRequest, 
@@ -151,9 +152,10 @@ def create_generated_todo(
     request: CreateToDoCandidateRequest,
     db: Session = Depends(get_db),
     service: TodoService = Depends(get_todo_service),
+    ai_service: AiService = Depends(get_ai_service),
     _: UUID = Depends(get_current_user_id)
 ):
-    candidates_data = service.create_candidate_todo(db, request.room_id)
+    candidates_data = service.create_candidate_todo(db, request.room_id, ai_service)
     
     return ViewToDoCandidateResponse(candidates=candidates_data)
 
