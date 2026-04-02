@@ -4,9 +4,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.dependencies.database import SessionLocal
+from app.repositories.chat_repository import ChatRepository
+from app.repositories.todo_repository import TodoRepository
 from app.services.ai_service import AiService
 
-service = AiService()
+service = AiService(chat_repository=ChatRepository(), todo_repository=TodoRepository())  # AiService 인스턴스 생성 (의존성 주입은 나중에 리팩토링 시 고려)
 logger = logging.getLogger(__name__)
 
 def embed_skills():
