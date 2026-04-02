@@ -3,7 +3,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app.core.dependencies import get_matching_service
 from app.core.verify_jwt import get_current_user_id
 from app.dependencies.database import get_db
