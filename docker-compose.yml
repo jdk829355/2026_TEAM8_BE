@@ -80,7 +80,7 @@ services:
 
   # 6. Database (PostgreSQL)
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     ports:
       - "5432:5432"
     environment:
@@ -88,7 +88,8 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_DB=mydb
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
+      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
 
@@ -104,6 +105,7 @@ services:
 
 volumes:
   postgres_data:
+  pg_data:
   redis_data:
 
 networks:

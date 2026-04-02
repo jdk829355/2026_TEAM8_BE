@@ -121,8 +121,8 @@ class AnnouncementService:
             user_id=str(user_id),
             want_to_skill=want_skill_name,
             can_teach_skill=can_teach_skill_name,
-            want_to_message=announcement.want_to_message,
-            can_teach_message=announcement.can_teach_message,
-            want_to_difficulty=announcement.want_to_difficulty,
-            can_teach_difficulty=announcement.can_teach_difficulty,
+            want_to_message=announcement.want_to_message, # type: ignore
+            can_teach_message=announcement.can_teach_message, # type: ignore
+            want_to_difficulty=announcement.want_to_difficulty, # type: ignore
+            can_teach_difficulty=announcement.can_teach_difficulty, # type: ignore
         )

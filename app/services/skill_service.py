@@ -13,11 +13,13 @@ from app.schemas.skill_schema import (
     EditCanToTeachRequest,
 )
 from app.models.skill_models import Skill, Want, CanTeach
+from app.services.ai_service import AiService
 
 
 class SkillService:
-    def __init__(self, repo: SkillRepository):
+    def __init__(self, repo: SkillRepository, ai_service: AiService):
         self.repo = repo
+        self.ai_service = ai_service
 
     def create_skill(
         self,
@@ -147,7 +149,8 @@ class SkillService:
         existing = self.repo.get_skill_by_name_and_category(db, name, category)
         if existing is not None:
             return existing
-        return self.repo.create_skill(db, name, category)
+        embedding = self.ai_service.encode_skill_name(name)
+        return self.repo.create_skill(db, name, category, embedding)
 
     def get_all_available_skills_by_keyword(
         self,
