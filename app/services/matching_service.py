@@ -2,7 +2,7 @@ from app.models import MatchingRequest
 from app.repositories.announcement_repository import AnnouncementRepository
 from app.repositories.matching_repository import MatchingRepository
 from app.schemas.chat_schema import WSMessageType
-from app.schemas.matching_schema import MatchingRequestsResponse, SentMatchingRequest, ReceivedMatchingRequest
+from app.schemas.matching_schema import MatchingRequestsResponse, SentMatchingRequest, ReceivedMatchingRequest, UpdateMatchingRequest, UpdateMatchingResponse
 
 
 class MatchingService:
@@ -10,6 +10,16 @@ class MatchingService:
         self.repo: MatchingRepository = repo
         self.announcement_repo: AnnouncementRepository = announcement_repo
 
+    def get_my_matchings(self, db, user_id):
+        return self.repo.get_my_matchings(db, user_id)
+
+    def get_matching_detail(self, db, id, current_user_id):
+        result_dict = self.repo.get_by_id(db, id, current_user_id)
+        if not result_dict:
+            raise ValueError("Matching not found")
+        
+        return result_dict
+    
     def accept_matching_request(self, db, matching_request_id):
         result = self.repo.create_matching_from_request(db, matching_request_id)
         if result is None:
@@ -59,3 +69,16 @@ class MatchingService:
                 room_id=str(matching_request[0].room_id),
             ) for matching_request in matching_request_receive],
         )
+    
+    def update_matching_status(self, db, matching_id, user_id, data: UpdateMatchingRequest):
+        result = self.repo.update_matching_and_teach(
+            db, matching_id, user_id, data.name, data.status
+        )
+        if not result:
+            raise ValueError("Matching not found")
+        
+        matching, is_all_completed = result
+        return {
+            "name": matching.name,
+            "matching_status": not is_all_completed
+        }

@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session, aliased
 from app.models.announcement_models import Announcement
 from app.models.chat_models import Chatroom, MatchingRequest
 from app.models.matching_models import Matching, Teach
+from app.models.skill_models import Skill
+
+from app.core.verify_jwt import get_current_user_id
 
 
 class MatchingRepository:
@@ -213,4 +216,85 @@ class MatchingRepository:
             .join(User, User.id == MatchingRequest.from_user_id)
             .all()
         )
-        return matching_request_send, matching_reqeust_receive # type: ignore
+        return matching_request_send, matching_reqeust_receive
+    
+    def get_my_matchings(self, db: Session, user_id: UUID):
+        # 내가 참여한(Teach 테이블에 내 ID가 있는) 매칭들을 찾고, 
+        # 그 매칭의 이름과 내가 가르치는 스킬, 배우는 스킬을 가져옵니다.
+        
+        # 1. 내가 참여한 매칭 ID들 먼저 찾기
+        my_matching_ids = db.query(Teach.matching_id).filter(Teach.teacher_id == user_id).subquery()
+
+        # 2. 해당 매칭들의 정보와 스킬 정보를 조인해서 가져오기
+        # (리스트용이므로 일단 간단하게 매칭 이름과 상태 정도만 가져오거나, 
+        # 필요하다면 아래처럼 상세하게 조인합니다.)
+        results = (
+            db.query(
+                Matching.id.label("matching_id"),
+                Matching.name,
+                Skill.name.label("skill_name")
+            )
+            .join(Teach, Teach.matching_id == Matching.id)
+            .join(Skill, Skill.id == Teach.skill_id)
+            .filter(Matching.id.in_(my_matching_ids))
+            .filter(Teach.teacher_id == user_id) # 내가 가르치는 스킬 기준
+            .all()
+        )
+        
+        return results
+    
+    def get_by_id(self, db: Session, matching_id: UUID, current_user_id: UUID):
+        # 1. 상대방 정보 (이름, ID, 상대방이 가르치는 스킬 이름)
+        opponent_data = (
+            db.query(User.name, User.id, Skill.name.label("skill_name"))
+            .join(Teach, Teach.teacher_id == User.id)
+            .join(Skill, Skill.id == Teach.skill_id)
+            .filter(Teach.matching_id == matching_id)
+            .filter(User.id != current_user_id) # 내가 아닌 상대방
+            .first()
+        )
+
+        # 2. 내가 가르치는 스킬 정보
+        my_skill_data = (
+            db.query(Skill.name)
+            .join(Teach, Teach.skill_id == Skill.id)
+            .filter(Teach.matching_id == matching_id)
+            .filter(Teach.teacher_id == current_user_id)
+            .first()
+        )
+
+        if not opponent_data:
+            return None
+
+        # ⭐ 중요: DB 모델이 아니라, 라우터가 기대하는 형태의 '딕셔너리'나 '객체'로 반환합니다.
+        return {
+            "opponent_name": opponent_data.name,
+            "opponent_id": str(opponent_data.id),
+            "teaching_skill": my_skill_data.name if my_skill_data else "Unknown",
+            "learning_skill": opponent_data.skill_name # 상대방이 가르치는 게 내가 배우는 것
+        }
+    
+    def update_matching_and_teach(self, db: Session, matching_id: UUID, user_id: UUID, name: str, status: str):
+        # 1. MATCHING 테이블 존재 확인 및 이름 업데이트
+        matching = db.query(Matching).filter(Matching.id == matching_id).first()
+        if not matching:
+            return None
+        matching.name = name
+
+        # 2. 나의 TEACH 상태 업데이트
+        my_teach = db.query(Teach).filter(
+            Teach.matching_id == matching_id, 
+            Teach.teacher_id == user_id
+        ).first()
+        if my_teach:
+            my_teach.status = status
+
+        db.flush() # 변경 사항 임시 반영 (조회를 위해)
+
+        # 3. 해당 매칭의 모든 TEACH 상태 확인
+        all_teaches = db.query(Teach).filter(Teach.matching_id == matching_id).all()
+        # 모든 TEACH의 status가 'COMPLETED'인지 체크 (두 개의 TEACH가 모두 COMPLETED여야 함)
+        is_all_completed = len(all_teaches) == 2 and all(t.status == "COMPLETED" for t in all_teaches)
+
+        db.commit()
+        return matching, is_all_completed
