@@ -18,18 +18,10 @@ from app.services.skill_service import SkillService
 from app.services.todo_service import TodoService
 from app.services.user_service import UserService
 
-@lru_cache()
-def get_ai_service() -> AiService:
-    return AiService()
 
 @lru_cache()
 def get_auth_repository() -> AuthRepository:
     return AuthRepository()
-
-
-@lru_cache()
-def get_skill_repository(ai_service: AiService = Depends(get_ai_service)) -> SkillRepository:
-    return SkillRepository(ai_service)
 
 
 @lru_cache()
@@ -65,12 +57,7 @@ def get_auth_service(
     return AuthService(repo)
 
 
-@lru_cache()
-def get_skill_service(
-    repo: SkillRepository = Depends(get_skill_repository),
-    ai_service: AiService = Depends(get_ai_service),
-) -> SkillService:
-    return SkillService(repo, ai_service)
+
 
 
 @lru_cache()
@@ -108,3 +95,21 @@ def get_announcement_service(
     repo: AnnouncementRepository = Depends(get_announcement_repository),
 ) -> AnnouncementService:
     return AnnouncementService(repo)
+
+
+@lru_cache()
+def get_ai_service(chat_repository: ChatRepository = Depends(get_chat_repository), todo_repository: TodoRepository = Depends(get_todo_repository)) -> AiService:
+    return AiService(chat_repository, todo_repository)
+
+@lru_cache()
+def get_skill_repository(ai_service: AiService = Depends(get_ai_service)) -> SkillRepository:
+    return SkillRepository(ai_service)
+
+@lru_cache()
+def get_skill_service(
+    repo: SkillRepository = Depends(get_skill_repository),
+    ai_service: AiService = Depends(get_ai_service),
+) -> SkillService:
+    return SkillService(repo, ai_service)
+
+

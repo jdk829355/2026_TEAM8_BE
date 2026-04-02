@@ -9,6 +9,7 @@ dependencies = [
     "dotenv>=0.9.9",
     "fastapi>=0.135.2",
     "huggingface-hub>=1.8.0",
+    "openai>=2.30.0",
     "passlib>=1.7.4",
     "pgvector>=0.4.2",
     "psycopg2-binary>=2.9.11",
