@@ -218,26 +218,30 @@ class MatchingRepository:
         )
         return matching_request_send, matching_reqeust_receive
     
-    def get_my_matchings(self, db: Session, user_id: UUID):
-        # 내가 참여한(Teach 테이블에 내 ID가 있는) 매칭들을 찾고, 
-        # 그 매칭의 이름과 내가 가르치는 스킬, 배우는 스킬을 가져옵니다.
-        
-        # 1. 내가 참여한 매칭 ID들 먼저 찾기
-        my_matching_ids = db.query(Teach.matching_id).filter(Teach.teacher_id == user_id).subquery()
 
-        # 2. 해당 매칭들의 정보와 스킬 정보를 조인해서 가져오기
-        # (리스트용이므로 일단 간단하게 매칭 이름과 상태 정도만 가져오거나, 
-        # 필요하다면 아래처럼 상세하게 조인합니다.)
+    def get_my_matchings(self, db: Session, user_id: UUID):
+        # 상대방의 Teach 정보를 가져오기 위한 별칭(Alias) 설정
+        PartnerTeach = aliased(Teach)
+        PartnerSkill = aliased(Skill)
+
         results = (
             db.query(
                 Matching.id.label("matching_id"),
                 Matching.name,
-                Skill.name.label("skill_name")
+                Skill.name.label("teaching_skill"),      # 내가 가르치는 스킬
+                PartnerSkill.name.label("learning_skill"), # 상대방이 가르치는(내가 배우는) 스킬
+                Teach.status.label("status")               # 내 진행 상태
             )
+            # 1. 내 Teach 정보 조인 (나의 스킬)
             .join(Teach, Teach.matching_id == Matching.id)
             .join(Skill, Skill.id == Teach.skill_id)
-            .filter(Matching.id.in_(my_matching_ids))
-            .filter(Teach.teacher_id == user_id) # 내가 가르치는 스킬 기준
+            
+            # 2. 상대방 Teach 정보 조인 (상대방의 스킬)
+            .join(PartnerTeach, (PartnerTeach.matching_id == Matching.id) & (PartnerTeach.teacher_id != user_id))
+            .join(PartnerSkill, PartnerSkill.id == PartnerTeach.skill_id)
+            
+            # 3. 내 ID로 필터링
+            .filter(Teach.teacher_id == user_id)
             .all()
         )
         

@@ -33,9 +33,7 @@ async def get_matching_requests(user_id: UUID = Depends(get_current_user_id), se
         logger.exception("failed to get matching requests"+str(exc))
         raise HTTPException(status_code=500, detail="failed to get matching requests") from exc
 
-# app/routers/matching/matching_router.py
-
-@router.get("/my", response_model=ViewMyMatchingListResponse)
+@router.get("/my", response_model=MatchingItem)
 async def get_my_matching(
     user_id: UUID = Depends(get_current_user_id), 
     service: MatchingService = Depends(get_matching_service), 
@@ -43,24 +41,26 @@ async def get_my_matching(
 ):
     try:
         matchings = service.get_my_matchings(db=db, user_id=user_id)
-        items = []
         
-        for match in matchings:
-            items.append(
-                MatchingItem(
-                    matching_id=str(match.matching_id),  
-                    name=match.name,
-                    # 만약 리포지토리에서 skill_name으로 가져왔다면 match.skill_name 사용
-                    teaching_skill=match.skill_name if hasattr(match, 'skill_name') else "N/A",
-                    learning_skill="상세보기에서 확인", # 리스트에서 배우는 스킬까지 가져오려면 조인이 더 복잡해지므로 일단 고정값
-                    status="ACTIVE" # Teach 테이블의 status를 가져와서 써도 됩니다.
-                )
-            )
+        if not matchings:
+            raise HTTPException(status_code=404, detail="참여 중인 매칭이 없습니다.")
 
-        return ViewMyMatchingListResponse(items=items)
+        match = matchings[0] 
+
+        return MatchingItem(
+            matching_id=str(match.matching_id),
+            name=match.name,
+            teaching_skill=match.teaching_skill,
+            learning_skill=match.learning_skill,
+            status=match.status
+        )
+
+    except HTTPException:
+        raise
     except Exception as exc:
-        logger.exception("failed to get my matchings " + str(exc))
-        raise HTTPException(status_code=500, detail="failed to get my matchings") from exc
+        logger = logging.getLogger(__name__)
+        logger.exception("failed to get my matching " + str(exc))
+        raise HTTPException(status_code=500, detail="failed to get my matching") from exc
 
 
 @router.get("/{id}", response_model=ViewDetailMatchingResponse)

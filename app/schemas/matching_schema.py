@@ -4,6 +4,7 @@ from typing import Literal
 
 # Response Models
 class MatchingItem(BaseModel):
+    matching_id: str
     name: str
     teaching_skill: str
     learning_skill: str
