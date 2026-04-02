@@ -20,8 +20,8 @@ class ToDoItem(BaseModel):
     name: str
     skill: str
     is_completed: bool
-    matching_name: str = None
-    matching_id: str = None
+    matching_name: str | None = None
+    matching_id: str | None = None
 
 class ViewMyToDoResponse(BaseModel):
     items: List[ToDoItem]
