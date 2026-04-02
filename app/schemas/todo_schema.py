@@ -7,18 +7,21 @@ class CreateToDoCandidateRequest(BaseModel):
 
 class CreateToDoRequest(BaseModel):
     matching_id: str
-    skill_id: str
-    task: str
+    skill: str
+    name: str
+    user_id: str
 
 class UpdateToDoRequest(BaseModel):
-    task: str
     is_completed: bool
 
 # Response Models
 class ToDoItem(BaseModel):
-    todo_id: int
-    task: str
+    todo_id: str
+    name: str
+    skill: str
     is_completed: bool
+    matching_name: str = None
+    matching_id: str = None
 
 class ViewMyToDoResponse(BaseModel):
     items: List[ToDoItem]
@@ -27,8 +30,8 @@ class ViewOpponentToDoResponse(BaseModel):
     items: List[ToDoItem]
 
 class UpdateToDoResponse(BaseModel):
-    todo_id: int
-    task: str
+    todo_id: str
+    name: str
     is_completed: bool
 
 class ToDoCandidate(BaseModel):
