@@ -9,6 +9,7 @@ from app.repositories.matching_repository import MatchingRepository
 from app.repositories.skill_repository import SkillRepository
 from app.repositories.todo_repository import TodoRepository
 from app.repositories.user_repository import UserRepository
+from app.services.ai_service import AiService
 from app.services.announcement_service import AnnouncementService
 from app.services.auth_service import AuthService
 from app.services.chat_service import ChatService
@@ -17,6 +18,9 @@ from app.services.skill_service import SkillService
 from app.services.todo_service import TodoService
 from app.services.user_service import UserService
 
+@lru_cache()
+def get_ai_service() -> AiService:
+    return AiService()
 
 @lru_cache()
 def get_auth_repository() -> AuthRepository:
@@ -24,8 +28,8 @@ def get_auth_repository() -> AuthRepository:
 
 
 @lru_cache()
-def get_skill_repository() -> SkillRepository:
-    return SkillRepository()
+def get_skill_repository(ai_service: AiService = Depends(get_ai_service)) -> SkillRepository:
+    return SkillRepository(ai_service)
 
 
 @lru_cache()
@@ -53,6 +57,7 @@ def get_announcement_repository() -> AnnouncementRepository:
     return AnnouncementRepository()
 
 
+
 @lru_cache()
 def get_auth_service(
     repo: AuthRepository = Depends(get_auth_repository),
@@ -63,8 +68,9 @@ def get_auth_service(
 @lru_cache()
 def get_skill_service(
     repo: SkillRepository = Depends(get_skill_repository),
+    ai_service: AiService = Depends(get_ai_service),
 ) -> SkillService:
-    return SkillService(repo)
+    return SkillService(repo, ai_service)
 
 
 @lru_cache()

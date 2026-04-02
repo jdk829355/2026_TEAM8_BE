@@ -1,13 +1,20 @@
+from functools import lru_cache
 from uuid import UUID
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Session
 
 from app.models.skill_models import CanTeach, Skill, Want
+from app.services.ai_service import AiService
 
 
 class SkillRepository:
-    def create_skill(self, db: Session, name: str, category: str = "general") -> Skill:
-        skill = Skill(name=name, category=category)
+    def __init__(self, ai_service: AiService):
+        self.ai_service: AiService = ai_service
+        self.keyword_cache = {}
+
+    def create_skill(self, db: Session, name: str, category: str = "general", embedding: list[float] | None = None) -> Skill:
+        skill = Skill(name=name, category=category, name_embedding=embedding if embedding else None)
         db.add(skill)
         db.commit()
         db.refresh(skill)
@@ -92,17 +99,21 @@ class SkillRepository:
 
     def get_skill_list(self, db: Session) -> list[Skill]:
         return db.query(Skill).order_by(Skill.name.asc()).all()
-
+    
     def get_skill_list_by_keyword(
         self, db: Session, keyword: str | None
     ) -> list[Skill]:
         query = db.query(Skill)
+        ordering = [Skill.name.asc()]
+        
         if keyword is not None and keyword.strip():
-            pattern = f"%{keyword.strip()}%"
+            embedding_keyword = self.ai_service.encode_skill_name(keyword.strip())
+            # 유사도 기준 탐색
             query = query.filter(
-                Skill.name.ilike(pattern) | Skill.category.ilike(pattern)
+                Skill.name_embedding.cosine_distance(embedding_keyword) < 0.5
             )
-        return query.order_by(Skill.name.asc()).all()
+            ordering.insert(0, Skill.name_embedding.cosine_distance(embedding_keyword).asc())
+        return query.order_by(*ordering).all()
 
     def search_skill(self, db: Session, keyword: str) -> list[Skill]:
         pattern = f"%{keyword.strip()}%"
