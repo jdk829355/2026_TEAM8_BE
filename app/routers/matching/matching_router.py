@@ -133,6 +133,8 @@ async def accept_matching(
         )
         if not is_deleted:
             raise HTTPException(status_code=404, detail="matching request not found")
+        if result is None:
+            raise HTTPException(status_code=500, detail="failed to reject matching request")
         await publisher.publish(user_event(str(result["user_id"])), result)
         await publisher.publish(user_event(str(result["to_user_id"])), result)
     return
