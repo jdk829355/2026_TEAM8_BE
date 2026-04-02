@@ -1,12 +1,16 @@
 from uuid import UUID
+import uuid
 from sqlalchemy.orm import Session
 from app.repositories.todo_repository import TodoRepository
-from app.models import Task, Teach, Skill  # 👈 이 줄을 꼭 추가해야 합니다!
+from app.models import Task, Teach, Skill, Matching, Chatroom  # 👈 이 줄을 꼭 추가해야 합니다!
 from fastapi import HTTPException
+from datetime import datetime
+
+from app.schemas.todo_schema import ToDoCandidate
 
 class TodoService:
     def __init__(self, repo: TodoRepository):
-        self.repo = repo
+        self.repo: TodoRepository = repo
 
     # [내 투두 조회]
     def get_my_tasks(self, db: Session, user_id: UUID):
@@ -43,10 +47,11 @@ class TodoService:
             t.matching_name = match_obj.name if match_obj else "알 수 없는 방"
 
         return tasks
+    
 
     # [투두 완료 상태 업데이트]
-    def update_todo_status(self, db: Session, task_id: UUID, is_completed: bool):
-        return self.repo.update_todo_status(db, task_id, is_completed)
+    def update_todo_status(self, db: Session, task_id: UUID, is_completed: bool, user_id: UUID):
+        return self.repo.update_todo_status(db, task_id, is_completed, user_id)
 
     # [후보군 채택 시 - Task 생성]
     def create_todo_from_candidate(self, db: Session, user_id: UUID, matching_id: UUID, skill, task_name: str):
@@ -68,9 +73,9 @@ class TodoService:
     def get_candidates(self, db: Session, chatroom_id: UUID):
         return self.repo.get_generated_todos_by_chatroom(db, chatroom_id)
     
-    def delete_todo(self, db: Session, todo_id: UUID):
+    def delete_todo(self, db: Session, todo_id: UUID, user_id: UUID):
         # 레포지토리에 있는 삭제 기능을 호출합니다.
-        return self.repo.delete_task(db, todo_id)
+        return self.repo.delete_task(db, todo_id, user_id)
     
     def get_todo_candidates(self, db: Session, room_id: str):
         # 레포지토리에서 데이터를 긁어옵니다.
@@ -84,6 +89,28 @@ class TodoService:
                 "skill": str(t.skill_id)
             } for t in tasks
         ]
+
+    def create_candidate_todo(self, db: Session, room_id: str) -> list[ToDoCandidate]:
+        
+
+        announcement = self.repo.get_announcement_by_room(db, room_id)
+        if not announcement:
+            raise ValueError("해당 방에 연결된 공고를 찾을 수 없습니다.")
+        skills = self.repo.get_skills_by_announcement(db, announcement.id) # type: ignore
+        skill_names = [s.name for s in skills] # type: ignore
+        name_to_id = {s.name: str(s.id) for s in skills} # type: ignore
+
+        # TODO: 투두 후보군 만드는 로직 들어가야함
+        candidates = [
+            ToDoCandidate(id=str(uuid.uuid4()), name="Python 기초 문법 익히기", skill=skill_names[0]), # type: ignore
+        ]
+        
+
+        for candidate in candidates:
+            self.repo.create_generated_todo(db, UUID(room_id), candidate.name, UUID(name_to_id.get(candidate.skill)), datetime.utcnow(), UUID(candidate.id)) # type: ignore
+        return candidates
+
+
     
     def get_tasks_by_room(self, db: Session, room_id: str):
         from app.models.todo_models import Task # Task 모델 위치에 맞게 수정 필요
@@ -97,14 +124,27 @@ class TodoService:
         candidate = self.repo.get_candidate_by_id(db, target_id)
         if not candidate:
             raise HTTPException(status_code=404, detail="후보를 찾을 수 없습니다.")
+        matching_row = (
+            db.query(Matching.id)
+            .join(Chatroom, Matching.id == Chatroom.matching_id)
+            .filter(Chatroom.id == candidate.chatroom_id)
+            .first()
+        )
+
+        if matching_row is None:
+            raise HTTPException(status_code=404, detail="해당 후보가 속한 매칭을 찾을 수 없습니다.")
+
+        matching_id = matching_row[0]
 
         # 2. 찾은 정보를 진짜 TASK 테이블로 복사해서 저장
         # matching_id는 candidate가 가지고 있는 걸 그대로 씁니다.
         new_task = self.repo.create_task(
             db, 
             user_id=user_id, 
-            name=candidate.name, 
+            name=candidate.name,  # type: ignore
             skill=candidate.skill_id, 
-            matching_id=candidate.matching_id
+            matching_id=matching_id
         )
+        # 3. 후보 테이블에서는 해당 데이터 삭제
+        self.repo.delete_generated_todo_by_id(db, candidate.id) # type: ignore
         return new_task
