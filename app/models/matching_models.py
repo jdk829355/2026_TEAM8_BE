@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import Column, ForeignKey, String
+from sqlalchemy import Column, ForeignKey, String,Boolean
 from sqlalchemy.types import Uuid
 
 from app.models.base import Base
@@ -11,6 +11,7 @@ class Matching(Base):
 
     id = Column(Uuid, primary_key=True, default=uuid.uuid4)
     name = Column(String(255))
+    matching_status = Column(Boolean, default=True) # true면 진행 중, false면 종료
 
 
 class Teach(Base):
