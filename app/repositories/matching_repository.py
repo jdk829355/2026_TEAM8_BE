@@ -213,4 +213,4 @@ class MatchingRepository:
             .join(User, User.id == MatchingRequest.from_user_id)
             .all()
         )
-        return matching_request_send, matching_reqeust_receive
+        return matching_request_send, matching_reqeust_receive # type: ignore
