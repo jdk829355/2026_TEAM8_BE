@@ -42,7 +42,7 @@ async def get_matching_requests(
         ) from exc
 
 
-@router.get("/my", response_model=MatchingItem)
+@router.get("/my", response_model=list[MatchingItem])
 async def get_my_matching(
     user_id: UUID = Depends(get_current_user_id),
     service: MatchingService = Depends(get_matching_service),
@@ -54,15 +54,13 @@ async def get_my_matching(
         if not matchings:
             raise HTTPException(status_code=404, detail="참여 중인 매칭이 없습니다.")
 
-        match = matchings[0]
-
-        return MatchingItem(
+        return [MatchingItem(
             matching_id=str(match.matching_id),
             name=match.name,
             teaching_skill=match.teaching_skill,
             learning_skill=match.learning_skill,
             status=match.status,
-        )
+        ) for match in matchings]
 
     except HTTPException:
         raise
