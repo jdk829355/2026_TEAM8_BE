@@ -60,6 +60,8 @@ class ChatService:
                 name=room.name,
                 last_message=room.last_message,
                 updated_at=room.updated_at.isoformat(),
+                announcement_id=str(room.announcement_id),
+                matching_id=str(room.matching_id) if room.matching_id is not None else None,
             )
             for room in chatrooms
         ]

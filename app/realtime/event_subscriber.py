@@ -19,9 +19,9 @@ class EventSubscriber:
         event["type"] = WSMessageType.RECEIVE_MATCHING
         await self.manager.send_to_channel(user_event(event["to_user_id"]), event)
 
-    async def _handle_reply_matching(self, event):
-        await self.manager.send_to_channel(user_event(event["to_user_id"]), event)
-        await self.manager.send_to_channel(user_event(event["user_id"]), event)
+    async def _handle_reply_matching(self, event, channel):
+        user_id = channel.split(":")[1]
+        await self.manager.send_to_channel(user_event(user_id), event)
 
     async def start(self):
         pubsub = self.redis.pubsub()
@@ -30,6 +30,8 @@ class EventSubscriber:
         async for message in pubsub.listen():
             if message["type"] == "pmessage":
                 data = json.loads(message["data"])
+                channel = message['channel'].decode()
+                print(f"Received message on channel {channel}: {data}")
 
                 match data["type"]:
                     case WSMessageType.SEND_MESSAGE:
@@ -37,4 +39,4 @@ class EventSubscriber:
                     case WSMessageType.REQUEST_MATCHING:
                         await self._handle_request_matching(data)
                     case WSMessageType.REPLY_MATCHING:
-                        await self._handle_reply_matching(data)
+                        await self._handle_reply_matching(data, channel)

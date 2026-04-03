@@ -16,7 +16,7 @@ class ChatRepository:
         self,
         db: Session,
         user_id: UUID,
-    ) -> List[Row[Tuple[UUID, str, str, str, datetime]]]:
+    ) -> List[Row[Tuple[UUID, str, str, str, datetime, UUID, UUID | None]]]:
         me = aliased(JoinChat)
         opponent = aliased(User)
 
@@ -50,6 +50,8 @@ class ChatRepository:
                     latest_message_subquery.c.latest_timestamp,
                     datetime.now(timezone.utc),
                 ).label("updated_at"),
+                Chatroom.announcement_id.label("announcement_id"),
+                Chatroom.matching_id.label("matching_id"),
             )
             .join(me, me.room_id == Chatroom.id)
             .outerjoin(opponent, opponent.id == opponent_user_id_subquery)
