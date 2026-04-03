@@ -15,18 +15,39 @@ AGENTS.md
 !.env.example
 
 .idea
+# ==========================================
+# 1. OS & IDE (Global)
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
 
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ==========================================
+# 2. General / Logs / Secrets (Global)
+# ==========================================
+*.pem
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+# 모든 디렉터리의 환경변수 파일 무시 (보안)
+**/.env*
 
-# dependencies
+# ==========================================
+# 3. Frontend (Next.js)
+# ==========================================
 frontend/node_modules
 frontend/.pnp
 frontend/.pnp.*
+
+# Yarn Berry
 frontend/.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+!frontend/.yarn/patches
+!frontend/.yarn/plugins
+!frontend/.yarn/releases
+!frontend/.yarn/versions
 
 # testing
 frontend/coverage
@@ -38,22 +59,8 @@ frontend/out/
 # production
 frontend/build
 
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-frontend/.env*
-
 # vercel
 frontend/.vercel
 
 # typescript
 frontend/*.tsbuildinfo
-frontend/next-env.d.ts
