@@ -7,9 +7,9 @@ from app.schemas.user_schema import EditMyProfileRequest, SearchUserProfileRespo
 
 
 class UserService:
-    def __init__(self, repo: UserRepository):
+    def __init__(self, repo: UserRepository, skill_repo: SkillRepository):
         self.repo = repo
-        self.skill_repo = SkillRepository()
+        self.skill_repo = skill_repo
 
     def get_user_profile(
         self, db: Session, user_id: uuid.UUID
@@ -27,10 +27,11 @@ class UserService:
         want_to_skills = [skill.name for skill in want_to_skills_obj]
 
         return SearchUserProfileResponse(
-            name=user.name,
-            email=user.email,
-            can_teach_skills=can_teach_skills,
-            want_to_skills=want_to_skills,
+            id=str(user.id),
+            name=user.name, # type: ignore
+            email=user.email, # type: ignore
+            can_teach_skills=can_teach_skills, # type: ignore
+            want_to_skills=want_to_skills, # type: ignore
         )
 
     def update_my_profile(

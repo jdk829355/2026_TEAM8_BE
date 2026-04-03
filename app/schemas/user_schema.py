@@ -10,6 +10,7 @@ class EditMyProfileRequest(BaseModel):
 
 # Response Models
 class SearchUserProfileResponse(BaseModel):
+    id: str
     name: str
     email: str
     can_teach_skills: List[str]

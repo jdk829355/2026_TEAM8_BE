@@ -67,7 +67,9 @@ async def chat_websocket(
                 data = await ws.receive_text()
                 event = json.loads(data)
                 logger.info(f"Received event: {event}")
-                service.handle_ws_message(db=db, event=event)
+                service.handle_ws_message(
+                    db=db, event=event, token_user_id=token_user_id
+                )
                 await handler.handle(event, ws, token_user_id)
             except WebSocketDisconnect:
                 logger.info("WebSocket disconnected by client")
@@ -79,7 +81,9 @@ async def chat_websocket(
             except Exception as e:
                 if str(e) == "이미 매칭이 존재하는 채팅방입니다.":
                     logger.warning(f"Matching already exists for room: {e}")
-                    await ws.send_json({"error": "matching already exists for this room"})
+                    await ws.send_json(
+                        {"error": "matching already exists for this room"}
+                    )
                     continue
                 logger.exception(f"WebSocket event handling error: {e}")
                 await ws.send_json({"error": "internal websocket error"})
@@ -108,5 +112,3 @@ def get_chat_room(
 def evaluate_chat_room_ai(room_id: str):
     _ = room_id
     return {"message": "evaluate_chat_room_ai handler"}
-
-

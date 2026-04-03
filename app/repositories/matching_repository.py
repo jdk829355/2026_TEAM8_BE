@@ -216,7 +216,7 @@ class MatchingRepository:
             .join(User, User.id == MatchingRequest.from_user_id)
             .all()
         )
-        return matching_request_send, matching_reqeust_receive
+        return matching_request_send, matching_reqeust_receive # type: ignore
     
 
     def get_my_matchings(self, db: Session, user_id: UUID):
@@ -283,7 +283,7 @@ class MatchingRepository:
         matching = db.query(Matching).filter(Matching.id == matching_id).first()
         if not matching:
             return None
-        matching.name = name
+        matching.name = name # type: ignore
 
         # 2. 나의 TEACH 상태 업데이트
         my_teach = db.query(Teach).filter(
@@ -291,7 +291,7 @@ class MatchingRepository:
             Teach.teacher_id == user_id
         ).first()
         if my_teach:
-            my_teach.status = status
+            my_teach.status = status # type: ignore
 
         db.flush() # 변경 사항 임시 반영 (조회를 위해)
 

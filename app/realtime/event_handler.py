@@ -24,26 +24,20 @@ class EventHandler:
         except KeyError as exc:
             raise ValueError("event type is required") from exc
 
+        event["user_id"] = token_user_id
+
         match event["type"]:
             case WSMessageType.JOIN_CHAT:
                 validated_event = WSSubscribeMessage.model_validate(event)
-                self._validate_user(validated_event.user_id, token_user_id)
                 self._handle_join_chat(validated_event, ws)
             case WSMessageType.SEND_MESSAGE:
                 validated_event = WSSendMessage.model_validate(event)
-                self._validate_user(validated_event.user_id, token_user_id)
                 await self._handle_send_message(validated_event)
             case WSMessageType.REQUEST_MATCHING:
                 validated_event = WSRequestMatchingMessage.model_validate(event)
-                self._validate_user(validated_event.user_id, token_user_id)
                 await self._handle_request_matching(validated_event)
             case _:
                 raise ValueError(f"unsupported event type: {message_type}")
-
-    @staticmethod
-    def _validate_user(event_user_id: UUID, token_user_id: UUID) -> None:
-        if event_user_id != token_user_id:
-            raise ValueError("event user_id does not match token user_id")
 
     def _handle_join_chat(self, event: WSSubscribeMessage, ws: WebSocket):
         manager.subscribe(ws, user_event(str(event.user_id)))

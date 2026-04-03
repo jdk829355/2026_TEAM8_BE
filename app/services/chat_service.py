@@ -15,7 +15,8 @@ class ChatService:
     def __init__(self, repo: ChatRepository):
         self.repo = repo
 
-    def handle_ws_message(self, db: Session, event: dict):
+    def handle_ws_message(self, db: Session, event: dict, token_user_id: UUID):
+        event["user_id"] = token_user_id
         match event["type"]:
             case WSMessageType.JOIN_CHAT:
                 return event
@@ -27,7 +28,7 @@ class ChatService:
     def _handle_request_matching(self, db: Session, event: dict):
         if self.check_matching_is_exists(db, event["room_id"]):
             raise Exception("이미 매칭이 존재하는 채팅방입니다.")
-        matching_request: MatchingRequest|None = self.repo.create_matching_request(
+        matching_request: MatchingRequest | None = self.repo.create_matching_request(
             db, event["user_id"], event["room_id"]
         )
         if matching_request is None:
@@ -36,7 +37,7 @@ class ChatService:
         event["matching_request_id"] = matching_request.id
         event["to_user_id"] = matching_request.to_user_id
         return event
-    
+
     def _handle_send_message(self, db: Session, event: dict):
         chat_log = self.repo.create_chat_log(
             db, event["room_id"], event["user_id"], event["content"]
@@ -46,7 +47,7 @@ class ChatService:
 
         event["chat_log_id"] = chat_log.id
         return event
-    
+
     def check_matching_is_exists(self, db: Session, room_id: UUID) -> bool:
         return self.repo.check_matching_exists(db, room_id)
 
@@ -85,7 +86,7 @@ class ChatService:
                     content=log.content,
                     timestamp=log.timestamp.isoformat(),
                     read=log.read,
-                    message_id= str(log.id)
+                    message_id=str(log.id),
                 )
             )
         return res

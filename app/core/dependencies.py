@@ -84,13 +84,6 @@ def get_todo_service(
 
 
 @lru_cache()
-def get_user_service(
-    repo: UserRepository = Depends(get_user_repository),
-) -> UserService:
-    return UserService(repo)
-
-
-@lru_cache()
 def get_announcement_service(
     repo: AnnouncementRepository = Depends(get_announcement_repository),
 ) -> AnnouncementService:
@@ -112,4 +105,9 @@ def get_skill_service(
 ) -> SkillService:
     return SkillService(repo, ai_service)
 
-
+@lru_cache()
+def get_user_service(
+    repo: UserRepository = Depends(get_user_repository),
+    skill_repo: SkillRepository = Depends(get_skill_repository),
+) -> UserService:
+    return UserService(repo, skill_repo)

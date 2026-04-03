@@ -50,8 +50,8 @@ class MatchingService:
 
         return (is_deleted, {
             "type": WSMessageType.REPLY_MATCHING,
-            "user_id": guest_id,
-            "to_user_id": host_id,
+            "user_id": host_id,
+            "to_user_id": guest_id,
             "accept": False,
         })
 
